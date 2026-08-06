@@ -9,7 +9,7 @@ type Risk = "safe" | "caution" | "danger";
 type InfoKind = "sand" | "wave" | "jelly" | "shade" | "timer" | "aid" | "plan";
 type Beach = { id:string; ko:string; en:string; coordinate:[number,number]; sand:number; wave:number; jelly:Risk; jellyArea:string; shade:{name:string;detail:string;walk:number}[] };
 
-type Props = { beach:Beach; beaches:Beach[]; activeInfo:InfoKind; onBeachSelect:(id:string)=>void; onInfoSelect:(kind:InfoKind)=>void };
+type Props = { beach:Beach; beaches:Beach[]; labels:Record<string,string>; activeInfo:InfoKind; onBeachSelect:(id:string)=>void; onInfoSelect:(kind:InfoKind)=>void };
 
 function FlyToBeach({ center }:{center:[number,number]}) {
   const map = useMap();
@@ -26,14 +26,14 @@ function emojiIcon(emoji:string, active:boolean) {
   });
 }
 
-export default function BeachMap({ beach, beaches, activeInfo, onBeachSelect, onInfoSelect }:Props) {
+export default function BeachMap({ beach, beaches, labels, activeInfo, onBeachSelect, onInfoSelect }:Props) {
   const [lat, lng] = beach.coordinate;
   const points:{kind:Extract<InfoKind,"sand"|"wave"|"jelly"|"shade"|"timer">; emoji:string; position:[number,number]; label:string}[] = [
-    { kind:"sand", emoji:"🌡️", position:[lat + .0011, lng - .0011], label:`모래 온도 ${beach.sand}°C` },
-    { kind:"wave", emoji:"🌊", position:[lat - .0008, lng + .0011], label:`파도 ${beach.wave}m` },
-    { kind:"jelly", emoji:"\u{1FABC}", position:[lat - .0013, lng + .0028], label:`해파리 ${beach.jellyArea}` },
-    { kind:"shade", emoji:"🌳", position:[lat + .0017, lng + .0018], label:`그늘 ${beach.shade[0].name}` },
-    { kind:"timer", emoji:"☀️", position:[lat - .0020, lng - .0019], label:"햇빛 노출 타이머" },
+    { kind:"sand", emoji:"🌡️", position:[lat + .0011, lng - .0011], label:`${labels.sand} ${beach.sand}°C` },
+    { kind:"wave", emoji:"🌊", position:[lat - .0008, lng + .0011], label:`${labels.wave} ${beach.wave}m` },
+    { kind:"jelly", emoji:"\u{1FABC}", position:[lat - .0013, lng + .0028], label:`${labels.jelly} ${beach.jellyArea}` },
+    { kind:"shade", emoji:"🌳", position:[lat + .0017, lng + .0018], label:`${labels.shade} 1` },
+    { kind:"timer", emoji:"☀️", position:[lat - .0020, lng - .0019], label:labels.timer },
   ];
   const color = beach.jelly === "danger" ? "#d6534b" : beach.jelly === "caution" ? "#d99c23" : "#1b8b6d";
   return <div className="real-map-wrap" aria-label={`${beach.ko} 실제 지도`}>
@@ -49,6 +49,6 @@ export default function BeachMap({ beach, beaches, activeInfo, onBeachSelect, on
         <Popup><b>{point.label}</b><br/>아이콘을 누르면 아래 상세 정보가 바뀝니다.</Popup>
       </Marker>)}
     </MapContainer>
-    <div className="map-legend"><span><i className="legend-beach"/> 해수욕장</span><span>🌡️ 온도</span><span>🌊 파도</span><span>{"\u{1FABC}"} 해파리</span><span>🌳 그늘</span></div>
+    <div className="map-legend"><span><i className="legend-beach"/> BEACH</span><span>🌡️ {labels.sand}</span><span>🌊 {labels.wave}</span><span>{"\u{1FABC}"} {labels.jelly}</span><span>🌳 {labels.shade}</span></div>
   </div>;
 }
