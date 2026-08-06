@@ -68,8 +68,8 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
   const sunPosition:[number,number]=[layout.sand[0] + .00035,layout.sand[1] + .00025];
   // Dadaepo uses a closer map view so each marker stays in its real beach/sea area and remains tappable.
   const dadaepoPositions = beach.id === "dadaepo" ? {
-    // The Dadaepo Beach label on the base map is the temperature reference point.
-    sand: [35.04830, 128.96520] as [number,number],
+    // Center of the yellow sand strip shown for Dadaepo Beach on the base map.
+    sand: [35.04560, 128.96520] as [number,number],
     timer: [35.04860, 128.97180] as [number,number],
     wave: [35.04160, 128.96250] as [number,number],
     jelly: [35.04160, 128.96870] as [number,number],
