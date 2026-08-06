@@ -9,11 +9,42 @@ type Risk = "safe" | "caution" | "danger";
 type InfoKind = "sand" | "wave" | "jelly" | "shade" | "timer" | "aid" | "plan";
 type Beach = { id:string; ko:string; en:string; coordinate:[number,number]; sand:number; wave:number; jelly:Risk; jellyArea:string; shade:{name:string;detail:string;walk:number}[] };
 
-type Props = { beach:Beach; beaches:Beach[]; labels:Record<string,string>; activeInfo:InfoKind; onBeachSelect:(id:string)=>void; onInfoSelect:(kind:InfoKind)=>void };
+type Props = { beach:Beach; beaches:Beach[]; labels:Record<string,string>; activeInfo:InfoKind; placeFocus?:[number,number]|null; onBeachSelect:(id:string)=>void; onInfoSelect:(kind:InfoKind)=>void };
 
-function FlyToBeach({ center }:{center:[number,number]}) {
+function FlyToBeach({ center, placeFocus }:{center:[number,number];placeFocus?:[number,number]|null}) {
   const map = useMap();
-  useEffect(() => { map.flyTo(center, 12.2, { duration: .65 }); }, [center, map]);
+  useEffect(() => { map.flyTo(placeFocus ?? center, placeFocus ? 15 : 12.2, { duration: .65 }); }, [center, map, placeFocus]);
+  return null;
+}
+
+const nearbyPlaceCoordinates:Record<string,[number,number]> = {
+  "더베이 101":[35.1569,129.1531], "The Bay 101":[35.1569,129.1531],
+  "동백섬":[35.1535,129.1519], "Dongbaekseom Island":[35.1535,129.1519],
+  "민락수변공원":[35.1555,129.1303], "Millak Waterfront Park":[35.1555,129.1303],
+  "광안리 카페거리":[35.1549,129.1198], "Gwangalli Cafe Street":[35.1549,129.1198],
+  "해동용궁사":[35.1882,129.2238], "Haedong Yonggungsa":[35.1882,129.2238],
+  "청사포 다릿돌전망대":[35.1607,129.1918], "Cheongsapo Observatory":[35.1607,129.1918],
+  "송도해상케이블카":[35.0773,129.0192], "Songdo Marine Cable Car":[35.0773,129.0192],
+  "암남공원":[35.0705,129.0158], "Amnam Park":[35.0705,129.0158],
+  "꿈의 낙조분수":[35.0464,128.9669], "Sunset Fountain of Dreams":[35.0464,128.9669],
+  "다대포 해변공원":[35.0483,128.9652], "Dadaepo Beach Park":[35.0483,128.9652],
+  "기장시장":[35.2445,129.2140], "Gijang Market":[35.2445,129.2140],
+  "일광 해안산책로":[35.2622,129.2334], "Ilgwang Coastal Trail":[35.2622,129.2334],
+  "죽성드림성당":[35.2414,129.2347], "Jukseong Dream Church":[35.2414,129.2347],
+};
+
+function FlyToNearbyPlace() {
+  const map = useMap();
+  useEffect(() => {
+    const move = (event:MouseEvent) => {
+      const card = (event.target as HTMLElement).closest(".plan-card button");
+      const name = card?.querySelector("b")?.textContent?.trim();
+      const coordinate = name ? nearbyPlaceCoordinates[name] : undefined;
+      if (coordinate) map.flyTo(coordinate, 15, { duration: .65 });
+    };
+    document.addEventListener("click", move);
+    return () => document.removeEventListener("click", move);
+  }, [map]);
   return null;
 }
 
@@ -26,7 +57,7 @@ function emojiIcon(emoji:string, active:boolean) {
   });
 }
 
-export default function BeachMap({ beach, beaches, labels, activeInfo, onBeachSelect, onInfoSelect }:Props) {
+export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocus, onBeachSelect, onInfoSelect }:Props) {
   const [lat, lng] = beach.coordinate;
   const points:{kind:Extract<InfoKind,"sand"|"wave"|"jelly"|"shade"|"timer">; emoji:string; position:[number,number]; label:string}[] = [
     // The beach coordinate is the centre of the sandy area, so keep this marker at the shoreline.
@@ -40,7 +71,8 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, onBeachSe
   return <div className="real-map-wrap" aria-label={`${beach.ko} 실제 지도`}>
     <MapContainer center={[35.153,129.095]} zoom={11.4} minZoom={10.5} maxBounds={[[34.98,128.84],[35.38,129.38]]} maxBoundsViscosity={1} scrollWheelZoom={true} className="real-map" zoomControl={false}>
       <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      <FlyToBeach center={beach.coordinate} />
+      <FlyToBeach center={beach.coordinate} placeFocus={placeFocus} />
+      <FlyToNearbyPlace />
       {beaches.map(b => <CircleMarker key={b.id} center={b.coordinate} radius={b.id===beach.id?8:5} pathOptions={{ color:"#fff", weight:2, fillColor:b.id===beach.id?"#f36e50":"#173f56", fillOpacity:1 }} eventHandlers={{ click:()=>onBeachSelect(b.id) }}>
         <Popup><b>{b.ko} 해수욕장</b><br/>선택하려면 점을 누르세요.</Popup>
       </CircleMarker>)}
