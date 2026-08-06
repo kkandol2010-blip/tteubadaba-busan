@@ -79,7 +79,7 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
   } : beach.id === "imrang" ? {
     // Imrang Beach's mapped sand strip runs north-to-south; put both heat controls on it.
     sand: [35.32130, 129.26750] as [number,number],
-    timer: [35.31580, 129.26750] as [number,number],
+    timer: [35.31940, 129.26780] as [number,number],
     wave: [35.31900, 129.27050] as [number,number],
     jelly: [35.31650, 129.27100] as [number,number],
     shade: [35.32300, 129.26450] as [number,number],
@@ -96,7 +96,7 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
   return <div className="real-map-wrap" aria-label={`${beach.ko} 실제 지도`}>
     <MapContainer center={[35.153,129.095]} zoom={11.4} minZoom={10.5} maxBounds={[[34.98,128.84],[35.38,129.38]]} maxBoundsViscosity={1} scrollWheelZoom={true} className="real-map" zoomControl={false}>
       <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      <FlyToBeach center={beach.coordinate} placeFocus={placeFocus} zoom={beach.id === "dadaepo" || beach.id === "imrang" ? 14 : 12.2} />
+      <FlyToBeach center={beach.coordinate} placeFocus={placeFocus} zoom={beach.id === "dadaepo" ? 14 : beach.id === "imrang" ? 15.5 : 12.2} />
       <FlyToNearbyPlace />
       {beaches.map(b => <CircleMarker key={b.id} center={b.coordinate} radius={b.id===beach.id?8:5} pathOptions={{ color:"#fff", weight:2, fillColor:b.id===beach.id?"#f36e50":"#173f56", fillOpacity:1 }} eventHandlers={{ click:()=>onBeachSelect(b.id) }}>
         <Popup><b>{b.en}</b><br/>{labels.tap}</Popup>
