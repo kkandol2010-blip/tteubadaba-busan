@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import BeachMap from "./BeachMap";
+import ExposureTracker from "./ExposureTracker";
 
 type Level = "좋음" | "주의" | "위험";
 
@@ -15,17 +17,18 @@ type Beach = {
   jellySpot: string;
   update: string;
   accent: string;
+  coordinate: [number, number];
   shadeSpots: { name: string; detail: string; walk: string }[];
 };
 
 const beaches: Beach[] = [
-  { id: "haeundae", name: "해운대", area: "해운대구", sandTemp: 42, wave: 0.8, shade: 72, jellyfish: "주의", jellySpot: "미포 방파제 인근", update: "14:10", accent: "#ff7a59", shadeSpots: [{ name: "해운대 광장 그늘막", detail: "5번 망루 뒤 · 18석", walk: "2분" }, { name: "동백섬 산책로", detail: "웨스틴 조선 방향 수목 그늘", walk: "7분" }, { name: "구남로 쿨링존", detail: "해변 입구 분수광장", walk: "5분" }] },
-  { id: "gwangalli", name: "광안리", area: "수영구", sandTemp: 39, wave: 0.5, shade: 58, jellyfish: "좋음", jellySpot: "관측 없음", update: "14:08", accent: "#5b79ff", shadeSpots: [{ name: "민락회센터 데크", detail: "민락 방향 파고라 · 12석", walk: "6분" }, { name: "남천 해변공원", detail: "삼익비치 방향 수목 구간", walk: "8분" }, { name: "만남의 광장", detail: "중앙 화장실 옆 그늘막", walk: "3분" }] },
-  { id: "songjeong", name: "송정", area: "해운대구", sandTemp: 44, wave: 1.4, shade: 36, jellyfish: "주의", jellySpot: "죽도공원 바깥 수역", update: "14:05", accent: "#8d6ce7", shadeSpots: [{ name: "죽도공원 입구", detail: "송일정 아래 수목 그늘", walk: "5분" }, { name: "구덕포 쉼터", detail: "해변열차 산책로 벤치", walk: "11분" }, { name: "중앙 안내소", detail: "3번 망루 맞은편 차양", walk: "2분" }] },
-  { id: "songdo", name: "송도", area: "서구", sandTemp: 38, wave: 0.4, shade: 81, jellyfish: "좋음", jellySpot: "관측 없음", update: "14:12", accent: "#13a085", shadeSpots: [{ name: "송림공원", detail: "해상케이블카 하부 소나무숲", walk: "4분" }, { name: "거북섬 쉼터", detail: "구름산책로 입구 파고라", walk: "6분" }, { name: "분수광장 차양", detail: "중앙 안내소 옆 · 20석", walk: "2분" }] },
-  { id: "dadaepo", name: "다대포", area: "사하구", sandTemp: 41, wave: 0.7, shade: 65, jellyfish: "위험", jellySpot: "몰운대 남측·낙동강 하구", update: "14:02", accent: "#e3a529", shadeSpots: [{ name: "해변공원 소나무숲", detail: "꿈의 낙조분수 서편", walk: "5분" }, { name: "생태탐방로 쉼터", detail: "고우니길 2번 데크", walk: "9분" }, { name: "낙조광장 그늘막", detail: "관리센터 앞 · 16석", walk: "3분" }] },
-  { id: "ilgwang", name: "일광", area: "기장군", sandTemp: 43, wave: 1.0, shade: 29, jellyfish: "주의", jellySpot: "학리항 외곽", update: "13:58", accent: "#f05c79", shadeSpots: [{ name: "이천쉼터", detail: "남측 해안산책로 파고라", walk: "8분" }, { name: "삼성리 수목 구간", detail: "강송교 인근 벤치", walk: "6분" }, { name: "중앙 안내소 차양", detail: "해변 진입광장", walk: "2분" }] },
-  { id: "imrang", name: "임랑", area: "기장군", sandTemp: 37, wave: 0.6, shade: 44, jellyfish: "좋음", jellySpot: "관측 없음", update: "13:55", accent: "#3586b8", shadeSpots: [{ name: "임랑행정봉사실", detail: "해변 중앙 파고라 · 10석", walk: "3분" }, { name: "월내천 산책로", detail: "북측 교량 아래 그늘", walk: "9분" }, { name: "임랑공원 수목", detail: "남측 주차장 맞은편", walk: "6분" }] },
+  { id: "haeundae", name: "해운대", area: "해운대구", sandTemp: 42, wave: 0.8, shade: 72, jellyfish: "주의", jellySpot: "미포 방파제 인근", update: "14:10", accent: "#ff7a59", coordinate: [35.1587, 129.1604], shadeSpots: [{ name: "해운대 광장 그늘막", detail: "5번 망루 뒤 · 18석", walk: "2분" }, { name: "동백섬 산책로", detail: "웨스틴 조선 방향 수목 그늘", walk: "7분" }, { name: "구남로 쿨링존", detail: "해변 입구 분수광장", walk: "5분" }] },
+  { id: "gwangalli", name: "광안리", area: "수영구", sandTemp: 39, wave: 0.5, shade: 58, jellyfish: "좋음", jellySpot: "관측 없음", update: "14:08", accent: "#5b79ff", coordinate: [35.1531, 129.1186], shadeSpots: [{ name: "민락회센터 데크", detail: "민락 방향 파고라 · 12석", walk: "6분" }, { name: "남천 해변공원", detail: "삼익비치 방향 수목 구간", walk: "8분" }, { name: "만남의 광장", detail: "중앙 화장실 옆 그늘막", walk: "3분" }] },
+  { id: "songjeong", name: "송정", area: "해운대구", sandTemp: 44, wave: 1.4, shade: 36, jellyfish: "주의", jellySpot: "죽도공원 바깥 수역", update: "14:05", accent: "#8d6ce7", coordinate: [35.1798, 129.1997], shadeSpots: [{ name: "죽도공원 입구", detail: "송일정 아래 수목 그늘", walk: "5분" }, { name: "구덕포 쉼터", detail: "해변열차 산책로 벤치", walk: "11분" }, { name: "중앙 안내소", detail: "3번 망루 맞은편 차양", walk: "2분" }] },
+  { id: "songdo", name: "송도", area: "서구", sandTemp: 38, wave: 0.4, shade: 81, jellyfish: "좋음", jellySpot: "관측 없음", update: "14:12", accent: "#13a085", coordinate: [35.0765, 129.0172], shadeSpots: [{ name: "송림공원", detail: "해상케이블카 하부 소나무숲", walk: "4분" }, { name: "거북섬 쉼터", detail: "구름산책로 입구 파고라", walk: "6분" }, { name: "분수광장 차양", detail: "중앙 안내소 옆 · 20석", walk: "2분" }] },
+  { id: "dadaepo", name: "다대포", area: "사하구", sandTemp: 41, wave: 0.7, shade: 65, jellyfish: "위험", jellySpot: "몰운대 남측·낙동강 하구", update: "14:02", accent: "#e3a529", coordinate: [35.0483, 128.9652], shadeSpots: [{ name: "해변공원 소나무숲", detail: "꿈의 낙조분수 서편", walk: "5분" }, { name: "생태탐방로 쉼터", detail: "고우니길 2번 데크", walk: "9분" }, { name: "낙조광장 그늘막", detail: "관리센터 앞 · 16석", walk: "3분" }] },
+  { id: "ilgwang", name: "일광", area: "기장군", sandTemp: 43, wave: 1.0, shade: 29, jellyfish: "주의", jellySpot: "학리항 외곽", update: "13:58", accent: "#f05c79", coordinate: [35.2633, 129.2338], shadeSpots: [{ name: "이천쉼터", detail: "남측 해안산책로 파고라", walk: "8분" }, { name: "삼성리 수목 구간", detail: "강송교 인근 벤치", walk: "6분" }, { name: "중앙 안내소 차양", detail: "해변 진입광장", walk: "2분" }] },
+  { id: "imrang", name: "임랑", area: "기장군", sandTemp: 37, wave: 0.6, shade: 44, jellyfish: "좋음", jellySpot: "관측 없음", update: "13:55", accent: "#3586b8", coordinate: [35.3197, 129.2659], shadeSpots: [{ name: "임랑행정봉사실", detail: "해변 중앙 파고라 · 10석", walk: "3분" }, { name: "월내천 산책로", detail: "북측 교량 아래 그늘", walk: "9분" }, { name: "임랑공원 수목", detail: "남측 주차장 맞은편", walk: "6분" }] },
 ];
 
 const alternatives = [
@@ -56,6 +59,8 @@ export default function Home() {
   const [selectedId, setSelectedId] = useState("haeundae");
   const [filter, setFilter] = useState("전체");
   const [tab, setTab] = useState<"해변 상황" | "다른 놀거리">("해변 상황");
+  const [language, setLanguage] = useState<"KO" | "EN">("KO");
+  const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
   const selected = beaches.find((beach) => beach.id === selectedId) ?? beaches[0];
   const filtered = useMemo(() => beaches.filter((beach) => {
     if (filter === "전체") return true;
@@ -72,14 +77,14 @@ export default function Home() {
         <nav aria-label="주요 메뉴">
           {(["해변 상황", "다른 놀거리"] as const).map((item) => <button key={item} className={tab === item ? "active" : ""} onClick={() => setTab(item)}>{item}</button>)}
         </nav>
-        <div className="header-right"><span className="live-dot" /> 부산 해변 관측 중 <button className="round-button" aria-label="알림">◌</button></div>
+        <div className="header-right"><span className="live-dot" /> {language === "KO" ? "부산 해변 관측 중" : "Busan beach monitor"}<label className="language-select"><span className="sr-only">Language</span><select value={language} onChange={(event) => setLanguage(event.target.value as "KO" | "EN")}><option value="KO">한국어</option><option value="EN">EN</option></select></label><button className="round-button" aria-label="알림">◌</button></div>
       </header>
 
       <section className="hero" id="top">
         <div className="hero-copy">
           <p className="eyebrow">BUSAN BEACH WEATHER</p>
-          <h1>오늘, 바다<br /><em>가도 될까?</em></h1>
-          <p className="intro">뜨거운 모래부터 높은 파도, 해파리까지.<br />가기 전에 딱 필요한 것만 확인하세요.</p>
+          <h1>{language === "KO" ? <>오늘, 바다<br /><em>가도 될까?</em></> : <>Should I go<br /><em>to the beach?</em></>}</h1>
+          <p className="intro">{language === "KO" ? <>뜨거운 모래부터 높은 파도, 해파리까지.<br />가기 전에 딱 필요한 것만 확인하세요.</> : <>Check sand heat, waves, shade and jellyfish<br />before you head out.</>}</p>
           <div className="hero-summary"><div><b>7</b><span>관측 해수욕장</span></div><div><b>3</b><span>지금 방문 추천</span></div><div><b>14:10</b><span>최근 업데이트</span></div></div>
         </div>
         <div className="sun" aria-hidden="true"><span className="cloud cloud-one" /><span className="cloud cloud-two" /><span className="wave-line wave-one" /><span className="wave-line wave-two" /></div>
@@ -121,14 +126,17 @@ export default function Home() {
             </div>
             <aside className="shade-panel">
               <div className="shade-head"><div><p className="eyebrow">COOL SPOTS</p><h3>가까운 그늘 찾기</h3></div><span>{selected.shadeSpots.length}곳</span></div>
-              <div className="mini-map" aria-label={`${selected.name} 주변 그늘 위치 개념도`}>
-                <span className="shore-label">해변</span><span className="sea-label">SEA</span>
-                <i className="road road-one" /><i className="road road-two" />
-                {selected.shadeSpots.map((_, index) => <span className={`map-pin pin-${index + 1}`} key={index}>{index + 1}</span>)}
-              </div>
+              <BeachMap beach={selected} userPosition={userPosition} />
               <ol className="spot-list">{selected.shadeSpots.map((spot, index) => <li key={spot.name}><span>{index + 1}</span><p><b>{spot.name}</b><small>{spot.detail}</small></p><em>도보 {spot.walk}</em></li>)}</ol>
             </aside>
           </div>
+
+          <ExposureTracker beachName={`${selected.name} 해수욕장`} sandTemp={selected.sandTemp} onPosition={setUserPosition} />
+          <section className="jelly-aid" aria-labelledby="jelly-aid-title">
+            <div className="aid-title"><p className="eyebrow coral">JELLYFISH FIRST AID</p><h2 id="jelly-aid-title">해파리에 쏘였다면</h2><p>해변 안전요원에게 먼저 알리고, 증상이 심하면 즉시 119에 연락하세요.</p></div>
+            <ol><li><span>1</span><p><b>물 밖으로 이동</b><small>통증 부위를 만지거나 문지르지 마세요.</small></p></li><li><span>2</span><p><b>바닷물로 10분 이상 세척</b><small>수돗물·민물은 사용하지 마세요.</small></p></li><li><span>3</span><p><b>남은 촉수는 카드로 제거</b><small>맨손 대신 플라스틱 카드 가장자리를 사용하세요.</small></p></li><li><span>4</span><p><b>호흡곤란·어지럼증은 119</b><small>오심, 구토, 식은땀도 즉시 진료가 필요해요.</small></p></li></ol>
+            <p className="aid-source">질병관리청 물놀이 활동 손상 예방·응급처치 수칙을 바탕으로 정리했습니다.</p>
+          </section>
 
           <div className="switch-banner">
             <div className="umbrella" aria-hidden="true">⌁</div>
