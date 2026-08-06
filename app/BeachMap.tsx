@@ -29,7 +29,8 @@ function emojiIcon(emoji:string, active:boolean) {
 export default function BeachMap({ beach, beaches, labels, activeInfo, onBeachSelect, onInfoSelect }:Props) {
   const [lat, lng] = beach.coordinate;
   const points:{kind:Extract<InfoKind,"sand"|"wave"|"jelly"|"shade"|"timer">; emoji:string; position:[number,number]; label:string}[] = [
-    { kind:"sand", emoji:"🌡️", position:[lat + .0011, lng - .0011], label:`${labels.sand} ${beach.sand}°C` },
+    // The beach coordinate is the centre of the sandy area, so keep this marker at the shoreline.
+    { kind:"sand", emoji:"🌡️", position:[lat - .00025, lng + .00015], label:`${labels.sand} ${beach.sand}°C` },
     { kind:"wave", emoji:"🌊", position:[lat - .0008, lng + .0011], label:`${labels.wave} ${beach.wave}m` },
     { kind:"jelly", emoji:"\u{1FABC}", position:[lat - .0013, lng + .0028], label:`${labels.jelly} ${beach.jellyArea}` },
     { kind:"shade", emoji:"🌳", position:[lat + .0017, lng + .0018], label:`${labels.shade} 1` },
