@@ -1,169 +1,134 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import BeachMap from "./BeachMap";
-import ExposureTracker from "./ExposureTracker";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-type Level = "좋음" | "주의" | "위험";
+type Lang = "ko" | "en" | "zh" | "ja" | "fr";
+type Risk = "safe" | "caution" | "danger";
 
 type Beach = {
   id: string;
-  name: string;
-  area: string;
-  sandTemp: number;
+  ko: string;
+  en: string;
+  district: string;
+  sand: number;
   wave: number;
-  shade: number;
-  jellyfish: Level;
-  jellySpot: string;
-  update: string;
-  accent: string;
-  coordinate: [number, number];
-  shadeSpots: { name: string; detail: string; walk: string }[];
+  jelly: Risk;
+  jellyArea: string;
+  shade: { name: string; detail: string; walk: number }[];
 };
 
-const beaches: Beach[] = [
-  { id: "haeundae", name: "해운대", area: "해운대구", sandTemp: 42, wave: 0.8, shade: 72, jellyfish: "주의", jellySpot: "미포 방파제 인근", update: "14:10", accent: "#ff7a59", coordinate: [35.1587, 129.1604], shadeSpots: [{ name: "해운대 광장 그늘막", detail: "5번 망루 뒤 · 18석", walk: "2분" }, { name: "동백섬 산책로", detail: "웨스틴 조선 방향 수목 그늘", walk: "7분" }, { name: "구남로 쿨링존", detail: "해변 입구 분수광장", walk: "5분" }] },
-  { id: "gwangalli", name: "광안리", area: "수영구", sandTemp: 39, wave: 0.5, shade: 58, jellyfish: "좋음", jellySpot: "관측 없음", update: "14:08", accent: "#5b79ff", coordinate: [35.1531, 129.1186], shadeSpots: [{ name: "민락회센터 데크", detail: "민락 방향 파고라 · 12석", walk: "6분" }, { name: "남천 해변공원", detail: "삼익비치 방향 수목 구간", walk: "8분" }, { name: "만남의 광장", detail: "중앙 화장실 옆 그늘막", walk: "3분" }] },
-  { id: "songjeong", name: "송정", area: "해운대구", sandTemp: 44, wave: 1.4, shade: 36, jellyfish: "주의", jellySpot: "죽도공원 바깥 수역", update: "14:05", accent: "#8d6ce7", coordinate: [35.1798, 129.1997], shadeSpots: [{ name: "죽도공원 입구", detail: "송일정 아래 수목 그늘", walk: "5분" }, { name: "구덕포 쉼터", detail: "해변열차 산책로 벤치", walk: "11분" }, { name: "중앙 안내소", detail: "3번 망루 맞은편 차양", walk: "2분" }] },
-  { id: "songdo", name: "송도", area: "서구", sandTemp: 38, wave: 0.4, shade: 81, jellyfish: "좋음", jellySpot: "관측 없음", update: "14:12", accent: "#13a085", coordinate: [35.0765, 129.0172], shadeSpots: [{ name: "송림공원", detail: "해상케이블카 하부 소나무숲", walk: "4분" }, { name: "거북섬 쉼터", detail: "구름산책로 입구 파고라", walk: "6분" }, { name: "분수광장 차양", detail: "중앙 안내소 옆 · 20석", walk: "2분" }] },
-  { id: "dadaepo", name: "다대포", area: "사하구", sandTemp: 41, wave: 0.7, shade: 65, jellyfish: "위험", jellySpot: "몰운대 남측·낙동강 하구", update: "14:02", accent: "#e3a529", coordinate: [35.0483, 128.9652], shadeSpots: [{ name: "해변공원 소나무숲", detail: "꿈의 낙조분수 서편", walk: "5분" }, { name: "생태탐방로 쉼터", detail: "고우니길 2번 데크", walk: "9분" }, { name: "낙조광장 그늘막", detail: "관리센터 앞 · 16석", walk: "3분" }] },
-  { id: "ilgwang", name: "일광", area: "기장군", sandTemp: 43, wave: 1.0, shade: 29, jellyfish: "주의", jellySpot: "학리항 외곽", update: "13:58", accent: "#f05c79", coordinate: [35.2633, 129.2338], shadeSpots: [{ name: "이천쉼터", detail: "남측 해안산책로 파고라", walk: "8분" }, { name: "삼성리 수목 구간", detail: "강송교 인근 벤치", walk: "6분" }, { name: "중앙 안내소 차양", detail: "해변 진입광장", walk: "2분" }] },
-  { id: "imrang", name: "임랑", area: "기장군", sandTemp: 37, wave: 0.6, shade: 44, jellyfish: "좋음", jellySpot: "관측 없음", update: "13:55", accent: "#3586b8", coordinate: [35.3197, 129.2659], shadeSpots: [{ name: "임랑행정봉사실", detail: "해변 중앙 파고라 · 10석", walk: "3분" }, { name: "월내천 산책로", detail: "북측 교량 아래 그늘", walk: "9분" }, { name: "임랑공원 수목", detail: "남측 주차장 맞은편", walk: "6분" }] },
+const BEACHES: Beach[] = [
+  { id: "haeundae", ko: "해운대", en: "Haeundae", district: "해운대구", sand: 42, wave: 0.8, jelly: "caution", jellyArea: "미포 방파제 인근", shade: [{ name: "해운대 광장 그늘막", detail: "5번 망루 뒤편", walk: 2 }, { name: "동백섬 산책로", detail: "수목 그늘 구간", walk: 7 }] },
+  { id: "gwangalli", ko: "광안리", en: "Gwangalli", district: "수영구", sand: 39, wave: 0.5, jelly: "safe", jellyArea: "관측 없음", shade: [{ name: "만남의 광장", detail: "중앙 음수대 옆", walk: 3 }, { name: "민락수변공원", detail: "해변 북쪽 수목 구간", walk: 8 }] },
+  { id: "songjeong", ko: "송정", en: "Songjeong", district: "해운대구", sand: 44, wave: 1.4, jelly: "caution", jellyArea: "죽도공원 앞 수역", shade: [{ name: "죽도공원 입구", detail: "송일정 아래 수목", walk: 5 }, { name: "중앙 안내소", detail: "3번 망루 맞은편", walk: 2 }] },
+  { id: "songdo", ko: "송도", en: "Songdo", district: "서구", sand: 38, wave: 0.4, jelly: "safe", jellyArea: "관측 없음", shade: [{ name: "송림공원", detail: "케이블카 하부 소나무숲", walk: 4 }, { name: "분수광장 차양", detail: "중앙 안내소 옆", walk: 2 }] },
+  { id: "dadaepo", ko: "다대포", en: "Dadaepo", district: "사하구", sand: 41, wave: 0.7, jelly: "danger", jellyArea: "몰운대 입구·낙동강 하구", shade: [{ name: "해변공원 소나무숲", detail: "꿈의 낙조분수 서편", walk: 5 }, { name: "생태탐방로 쉼터", detail: "고우니길 2번 데크", walk: 9 }] },
+  { id: "ilgwang", ko: "일광", en: "Ilgwang", district: "기장군", sand: 43, wave: 1.0, jelly: "caution", jellyArea: "학리항 인근", shade: [{ name: "이천쉼터", detail: "해변 남쪽 산책로", walk: 8 }, { name: "중앙 안내소 차양", detail: "해변 진입광장", walk: 2 }] },
+  { id: "imrang", ko: "임랑", en: "Imrang", district: "기장군", sand: 37, wave: 0.6, jelly: "safe", jellyArea: "관측 없음", shade: [{ name: "임랑행정봉사실", detail: "해변 중앙 쉼터", walk: 3 }, { name: "임랑공원 수목", detail: "해변 주차장 맞은편", walk: 6 }] },
 ];
 
-const alternatives = [
-  { title: "뮤지엄 원", meta: "실내 · 해운대구", reason: "시원한 미디어아트 전시", tag: "더위 대피", color: "violet" },
-  { title: "부산현대미술관", meta: "실내 · 사하구", reason: "비·파도 걱정 없는 무료 전시", tag: "가족 추천", color: "green" },
-  { title: "영화의전당", meta: "실내/야간 · 해운대구", reason: "늦은 오후 영화와 산책", tag: "야간 추천", color: "blue" },
-  { title: "국립부산과학관", meta: "실내 · 기장군", reason: "아이와 반나절 체험 코스", tag: "아이와", color: "orange" },
+const copy: Record<Lang, Record<string, string>> = {
+  ko: { choose: "언어를 선택해 주세요", chooseSub: "부산 바다를 더 안전하고 시원하게 즐겨요", start: "시작하기", live: "부산 해변 안전 가이드", heroTag: "오늘의 부산 바다", hero: "뜨거우면,\n딴 바다로.", heroSub: "모래 온도부터 파도, 해파리, 그늘까지\n출발 전 꼭 필요한 것만 확인하세요.", beaches: "해수욕장 한눈에 보기", all: "전체", safe: "안전", caution: "주의", danger: "위험", sand: "모래 온도", wave: "파도 높이", jelly: "해파리", shade: "가까운 그늘", min: "분", ago: "도보", selected: "선택한 해수욕장", monitor: "햇빛 노출 타이머", monitorSub: "현재 위치를 확인하고 햇빛에 머문 시간을 알려드려요.", locate: "위치 확인 후 시작", pause: "잠시 멈춤", resume: "다시 시작", reset: "초기화", notify: "알림 허용", exposure: "노출 시간", next: "다음 알림", firstAid: "해파리에 쏘였다면", alternatives: "오늘 바다가 힘들다면", viewAlt: "다른 활동 보기", back: "바다 현황으로", updated: "오늘 14:10 기준 · 시연용 데이터", disclaimer: "실제 방문 전 현장 안전요원과 공식 기상 정보를 확인하세요.", statusSafe: "방문 좋아요", statusCaution: "주의 필요", statusDanger: "방문 비추천", navBeach: "해변", navTimer: "타이머", navAid: "응급처치" },
+  en: { choose: "Choose your language", chooseSub: "Enjoy Busan’s beaches safely and comfortably", start: "Continue", live: "Busan beach safety guide", heroTag: "Busan beaches today", hero: "Too hot?\nTry another coast.", heroSub: "Check sand heat, waves, jellyfish and shade\nbefore you head out.", beaches: "All beaches at a glance", all: "All", safe: "Safe", caution: "Caution", danger: "Danger", sand: "Sand temp.", wave: "Wave height", jelly: "Jellyfish", shade: "Nearby shade", min: "min", ago: "walk", selected: "Selected beach", monitor: "Sun exposure timer", monitorSub: "Use your location and get reminders while you stay in the sun.", locate: "Locate & start", pause: "Pause", resume: "Resume", reset: "Reset", notify: "Allow alerts", exposure: "Exposure", next: "Next alert", firstAid: "If you are stung", alternatives: "When the beach is too risky", viewAlt: "See other activities", back: "Back to beaches", updated: "As of 14:10 today · Demo data", disclaimer: "Check official weather and on-site safety guidance before visiting.", statusSafe: "Good to visit", statusCaution: "Use caution", statusDanger: "Avoid today", navBeach: "Beaches", navTimer: "Timer", navAid: "First aid" },
+  zh: { choose: "请选择语言", chooseSub: "更安全、更舒适地享受釜山海滩", start: "开始", live: "釜山海滩安全指南", heroTag: "今天的釜山海边", hero: "太热了，\n换一片海吧。", heroSub: "出发前查看沙温、海浪、水母和阴凉处。", beaches: "所有海滩一览", all: "全部", safe: "安全", caution: "注意", danger: "危险", sand: "沙滩温度", wave: "浪高", jelly: "水母", shade: "附近阴凉处", min: "分钟", ago: "步行", selected: "已选海滩", monitor: "阳光暴露计时器", monitorSub: "确认位置并在日晒过久时提醒您。", locate: "定位并开始", pause: "暂停", resume: "继续", reset: "重置", notify: "允许通知", exposure: "暴露时间", next: "下次提醒", firstAid: "被水母蜇伤时", alternatives: "不适合去海边时", viewAlt: "查看其他活动", back: "返回海滩", updated: "今日14:10 · 演示数据", disclaimer: "访问前请确认官方天气和现场安全指引。", statusSafe: "适合前往", statusCaution: "需要注意", statusDanger: "不建议前往", navBeach: "海滩", navTimer: "计时器", navAid: "急救" },
+  ja: { choose: "言語を選択してください", chooseSub: "釜山の海を安全で快適に楽しもう", start: "はじめる", live: "釜山ビーチ安全ガイド", heroTag: "今日の釜山の海", hero: "暑すぎたら、\n別の海へ。", heroSub: "砂の温度、波、クラゲ、日陰を出発前にチェック。", beaches: "ビーチ一覧", all: "すべて", safe: "安全", caution: "注意", danger: "危険", sand: "砂の温度", wave: "波の高さ", jelly: "クラゲ", shade: "近くの日陰", min: "分", ago: "徒歩", selected: "選択したビーチ", monitor: "日光タイマー", monitorSub: "位置を確認し、長時間の日差しをお知らせします。", locate: "位置確認して開始", pause: "一時停止", resume: "再開", reset: "リセット", notify: "通知を許可", exposure: "経過時間", next: "次の通知", firstAid: "クラゲに刺されたら", alternatives: "海に行けない日は", viewAlt: "別の活動を見る", back: "海の状況へ", updated: "本日14:10現在・デモデータ", disclaimer: "訪問前に公式気象情報と現地案内をご確認ください。", statusSafe: "おすすめ", statusCaution: "注意が必要", statusDanger: "訪問非推奨", navBeach: "ビーチ", navTimer: "タイマー", navAid: "応急処置" },
+  fr: { choose: "Choisissez votre langue", chooseSub: "Profitez des plages de Busan en toute sécurité", start: "Continuer", live: "Guide sécurité des plages de Busan", heroTag: "La mer à Busan aujourd’hui", hero: "Trop chaud ?\nChangez de plage.", heroSub: "Sable, vagues, méduses et ombre : vérifiez avant de partir.", beaches: "Toutes les plages", all: "Toutes", safe: "Sûr", caution: "Prudence", danger: "Danger", sand: "Sable", wave: "Vagues", jelly: "Méduses", shade: "Ombre proche", min: "min", ago: "à pied", selected: "Plage choisie", monitor: "Minuteur solaire", monitorSub: "Utilisez votre position et recevez des rappels au soleil.", locate: "Localiser et démarrer", pause: "Pause", resume: "Reprendre", reset: "Réinitialiser", notify: "Activer les alertes", exposure: "Exposition", next: "Prochaine alerte", firstAid: "En cas de piqûre", alternatives: "Si la plage est déconseillée", viewAlt: "Voir d’autres activités", back: "Retour aux plages", updated: "Aujourd’hui 14:10 · Données démo", disclaimer: "Vérifiez la météo officielle et les consignes sur place avant de partir.", statusSafe: "Bonne visite", statusCaution: "Prudence", statusDanger: "À éviter", navBeach: "Plages", navTimer: "Minuteur", navAid: "Premiers soins" },
+};
+
+const languageNames: { id: Lang; label: string; native: string }[] = [
+  { id: "ko", label: "Korean", native: "한국어" }, { id: "en", label: "English", native: "English" }, { id: "zh", label: "Chinese", native: "中文" }, { id: "ja", label: "Japanese", native: "日本語" }, { id: "fr", label: "French", native: "Français" },
 ];
 
-function getRisk(beach: Beach) {
-  let score = 0;
-  if (beach.sandTemp >= 43) score += 2;
-  else if (beach.sandTemp >= 40) score += 1;
-  if (beach.wave >= 1.2) score += 2;
-  else if (beach.wave >= 0.8) score += 1;
-  if (beach.shade < 35) score += 2;
-  else if (beach.shade < 55) score += 1;
-  if (beach.jellyfish === "위험") score += 3;
-  else if (beach.jellyfish === "주의") score += 1;
-  return score >= 5 ? "방문 비추천" : score >= 3 ? "주의 필요" : "방문 좋아요";
+function getRisk(b: Beach): Risk {
+  if (b.jelly === "danger" || b.wave >= 1.3) return "danger";
+  if (b.sand >= 42 || b.wave >= 0.8 || b.jelly === "caution") return "caution";
+  return "safe";
 }
 
-function StatusDot({ level }: { level: Level }) {
-  return <span className={`status-dot ${level === "좋음" ? "safe" : level === "주의" ? "warn" : "danger"}`} />;
+function formatTime(seconds: number) {
+  const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+  const s = (seconds % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
 }
 
 export default function Home() {
+  const [lang, setLang] = useState<Lang>("ko");
+  const [entered, setEntered] = useState(false);
   const [selectedId, setSelectedId] = useState("haeundae");
-  const [filter, setFilter] = useState("전체");
-  const [tab, setTab] = useState<"해변 상황" | "다른 놀거리">("해변 상황");
-  const [language, setLanguage] = useState<"KO" | "EN">("KO");
-  const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
-  const [installPrompt, setInstallPrompt] = useState<{ prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> } | null>(null);
+  const [filter, setFilter] = useState<"all" | Risk>("all");
+  const [view, setView] = useState<"beaches" | "alternatives">("beaches");
+  const [seconds, setSeconds] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [located, setLocated] = useState(false);
+  const [locationText, setLocationText] = useState("");
+  const notificationSent = useRef(false);
+  const t = copy[lang];
+  const selected = BEACHES.find((b) => b.id === selectedId) ?? BEACHES[0];
+
   useEffect(() => {
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
-    const capture = (event: Event) => { event.preventDefault(); setInstallPrompt(event as unknown as { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> }); };
-    window.addEventListener("beforeinstallprompt", capture);
-    return () => window.removeEventListener("beforeinstallprompt", capture);
-  }, []);
-  const installApp = async () => { if (!installPrompt) return; await installPrompt.prompt(); await installPrompt.userChoice; setInstallPrompt(null); };
-  const selected = beaches.find((beach) => beach.id === selectedId) ?? beaches[0];
-  const filtered = useMemo(() => beaches.filter((beach) => {
-    if (filter === "전체") return true;
-    if (filter === "안전") return getRisk(beach) === "방문 좋아요";
-    if (filter === "낮은 파도") return beach.wave < 0.8;
-    return beach.shade >= 60;
-  }), [filter]);
-  const risk = getRisk(selected);
+    if (!running) return;
+    const timer = window.setInterval(() => setSeconds((s) => s + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [running]);
 
-  return (
-    <main>
-      <header className="topbar">
-        <a className="brand" href="#top" aria-label="바다어때 홈"><span className="brand-mark">⌁</span><span>바다어때</span></a>
-        <nav aria-label="주요 메뉴">
-          {(["해변 상황", "다른 놀거리"] as const).map((item) => <button key={item} className={tab === item ? "active" : ""} onClick={() => setTab(item)}>{item}</button>)}
-        </nav>
-        <div className="header-right"><span className="live-dot" /> {language === "KO" ? "부산 해변 관측 중" : "Busan beach monitor"}{installPrompt && <button className="install-button" onClick={installApp}>앱 설치</button>}<label className="language-select"><span className="sr-only">Language</span><select value={language} onChange={(event) => setLanguage(event.target.value as "KO" | "EN")}><option value="KO">한국어</option><option value="EN">EN</option></select></label><button className="round-button" aria-label="알림">◌</button></div>
-      </header>
+  useEffect(() => {
+    if (seconds >= 1200 && !notificationSent.current) {
+      notificationSent.current = true;
+      if ("Notification" in window && Notification.permission === "granted") new Notification("뜨바다바", { body: "햇빛에 20분 노출되었어요. 그늘에서 쉬고 자외선 차단제를 덧발라 주세요." });
+    }
+  }, [seconds]);
 
-      <section className="hero" id="top">
-        <div className="hero-copy">
-          <p className="eyebrow">BUSAN BEACH WEATHER</p>
-          <h1>{language === "KO" ? <>오늘, 바다<br /><em>가도 될까?</em></> : <>Should I go<br /><em>to the beach?</em></>}</h1>
-          <p className="intro">{language === "KO" ? <>뜨거운 모래부터 높은 파도, 해파리까지.<br />가기 전에 딱 필요한 것만 확인하세요.</> : <>Check sand heat, waves, shade and jellyfish<br />before you head out.</>}</p>
-          <div className="hero-summary"><div><b>7</b><span>관측 해수욕장</span></div><div><b>3</b><span>지금 방문 추천</span></div><div><b>14:10</b><span>최근 업데이트</span></div></div>
-        </div>
-        <div className="sun" aria-hidden="true"><span className="cloud cloud-one" /><span className="cloud cloud-two" /><span className="wave-line wave-one" /><span className="wave-line wave-two" /></div>
-        <div className="hero-card">
-          <span className="card-kicker">오늘의 한마디</span>
-          <strong>발바닥도<br />휴식이 필요해요.</strong>
-          <p>오후 2~4시에는 모래가 가장 뜨거워요.<br />아쿠아슈즈를 꼭 챙기세요.</p>
-        </div>
+  const filtered = useMemo(() => BEACHES.filter((b) => filter === "all" || getRisk(b) === filter), [filter]);
+  const startLocation = () => {
+    if (!("geolocation" in navigator)) { setLocationText("위치 기능을 사용할 수 없습니다"); setRunning(true); return; }
+    setLocationText("위치 확인 중…");
+    navigator.geolocation.getCurrentPosition(() => { setLocated(true); setLocationText(`${selected.ko} 인근 · 위치 확인됨`); setRunning(true); }, () => { setLocationText("위치 권한 없이 타이머를 시작했어요"); setRunning(true); }, { enableHighAccuracy: true, timeout: 8000 });
+  };
+  const allowNotification = async () => { if ("Notification" in window) await Notification.requestPermission(); };
+
+  if (!entered) return <main className="welcome">
+    <div className="welcome-sun" aria-hidden="true" />
+    <div className="welcome-wave wave-a" aria-hidden="true" /><div className="welcome-wave wave-b" aria-hidden="true" />
+    <section className="welcome-card">
+      <div className="logo-mark">뜨</div>
+      <p className="logo-title">뜨바다바</p>
+      <p className="logo-sub">뜨거운 바다, 딴 바다로</p>
+      <div className="language-box">
+        <h1>{copy[lang].choose}</h1><p>{copy[lang].chooseSub}</p>
+        <div className="language-list">{languageNames.map((item) => <button key={item.id} className={lang === item.id ? "chosen" : ""} onClick={() => setLang(item.id)}><span>{item.native}</span><small>{item.label}</small><b>{lang === item.id ? "✓" : "›"}</b></button>)}</div>
+        <button className="primary wide" onClick={() => setEntered(true)}>{copy[lang].start} <span>→</span></button>
+      </div>
+    </section>
+  </main>;
+
+  return <main className="app-shell">
+    <header className="topbar"><button className="brand" onClick={() => setView("beaches")}><span className="mini-logo">뜨</span><span>뜨바다바<small>뜨거운 바다, 딴 바다로</small></span></button><div className="top-actions"><span className="live"><i />{t.live}</span><select aria-label="Language" value={lang} onChange={(e) => setLang(e.target.value as Lang)}>{languageNames.map((l) => <option key={l.id} value={l.id}>{l.native}</option>)}</select></div></header>
+    <section className="hero"><div className="hero-copy"><p className="eyebrow">BUSAN BEACH WEATHER</p><h1>{t.hero.split("\n").map((line, i) => <span key={line} className={i ? "accent" : ""}>{line}</span>)}</h1><p>{t.heroSub.split("\n").map((line) => <span key={line}>{line}</span>)}</p><div className="hero-facts"><div><b>7</b><small>BEACHES</small></div><div><b>3</b><small>GOOD NOW</small></div><div><b>14:10</b><small>UPDATED</small></div></div></div><div className="hero-visual" aria-hidden="true"><div className="sun-disc"><span>오늘은</span><b>그늘 필수!</b></div><div className="cloud c1"/><div className="cloud c2"/><div className="sea-line l1"/><div className="sea-line l2"/></div></section>
+
+    {view === "beaches" ? <>
+      <section className="beach-section" id="beaches"><div className="section-head"><div><p className="eyebrow coral">BEACH CHECK</p><h2>{t.beaches}</h2><small>{t.updated}</small></div><div className="filters">{(["all", "safe", "caution", "danger"] as const).map((f) => <button key={f} className={filter === f ? "active" : ""} onClick={() => setFilter(f)}>{t[f]}</button>)}</div></div>
+        <div className="beach-grid">{filtered.map((b) => { const risk = getRisk(b); return <button key={b.id} className={`beach-card ${selectedId === b.id ? "selected" : ""}`} onClick={() => setSelectedId(b.id)}><div className="beach-card-head"><span><b>{lang === "ko" ? b.ko : b.en}</b><small>{b.district}</small></span><em className={`risk ${risk}`}>{t[`status${risk[0].toUpperCase()}${risk.slice(1)}`]}</em></div><div className="metrics"><span><small>{t.sand}</small><b>{b.sand}<i>°C</i></b></span><span><small>{t.wave}</small><b>{b.wave}<i>m</i></b></span></div><div className="jelly-row"><span><i className={`dot ${b.jelly}`} />{t.jelly} · {t[b.jelly]}</span><small>14:10</small></div></button>})}</div>
       </section>
 
-      <section className="content-shell">
-        {tab === "해변 상황" ? <>
-          <div className="section-heading">
-            <div><p className="eyebrow coral">BEACH CHECK</p><h2>해수욕장 한눈에 보기</h2></div>
-            <div className="filters" role="group" aria-label="해변 필터">{["전체", "안전", "낮은 파도", "그늘 많음"].map((item) => <button key={item} onClick={() => setFilter(item)} className={filter === item ? "selected" : ""}>{item}</button>)}</div>
-          </div>
-          <div className="beach-grid">
-            {filtered.map((beach) => {
-              const state = getRisk(beach);
-              return <button key={beach.id} className={`beach-card ${selectedId === beach.id ? "chosen" : ""}`} onClick={() => setSelectedId(beach.id)} style={{ "--accent": beach.accent } as React.CSSProperties}>
-                <span className="beach-top"><span><b>{beach.name}</b><small>{beach.area}</small></span><span className={`pill ${state === "방문 좋아요" ? "safe-pill" : state === "주의 필요" ? "warn-pill" : "danger-pill"}`}>{state}</span></span>
-                <span className="metrics"><span><small>모래 온도</small><b>{beach.sandTemp}<i>°</i></b></span><span><small>파도 높이</small><b>{beach.wave}<i>m</i></b></span><span><small>그늘 지수</small><b>{beach.shade}<i>%</i></b></span></span>
-                <span className="jelly"><span><StatusDot level={beach.jellyfish} /> 해파리 {beach.jellyfish}</span><small>{beach.update} 갱신</small></span>
-              </button>;
-            })}
-          </div>
+      <section className="detail"><div className="detail-main"><p className="eyebrow coral">{t.selected}</p><div className="detail-title"><div><h2>{lang === "ko" ? selected.ko : selected.en} Beach</h2><p>{selected.district} · 14:10</p></div><span className={`risk big ${getRisk(selected)}`}>{t[`status${getRisk(selected)[0].toUpperCase()}${getRisk(selected).slice(1)}`]}</span></div><div className={`notice ${getRisk(selected)}`}><b>!</b><p><strong>{selected.sand >= 43 ? `${t.sand} ${selected.sand}°C` : `${t.jelly} · ${t[selected.jelly]}`}</strong><span>{getRisk(selected) === "danger" ? "오늘은 물놀이보다 실내 활동을 추천해요." : "30분마다 그늘에서 쉬고 물을 자주 마셔 주세요."}</span></p></div><div className="big-metrics"><div><span>♨</span><p><small>{t.sand}</small><b>{selected.sand}°C</b></p></div><div><span>≈</span><p><small>{t.wave}</small><b>{selected.wave}m</b></p></div><div><span>◒</span><p><small>{t.jelly}</small><b>{t[selected.jelly]}</b></p></div></div></div><aside className="shade-card"><div><p className="eyebrow">COOL SPOTS</p><h3>{t.shade}</h3></div><div className="mini-map"><span className="map-road r1"/><span className="map-road r2"/><i className="pin p1">1</i><i className="pin p2">2</i><b className="you">● YOU</b></div><ol>{selected.shade.map((spot, i) => <li key={spot.name}><b>{i + 1}</b><p><strong>{spot.name}</strong><small>{spot.detail}</small></p><em>{t.ago} {spot.walk}{t.min}</em></li>)}</ol></aside></section>
 
-          <div className="detail-panel">
-            <div className="detail-copy">
-              <p className="eyebrow coral">SELECTED BEACH</p>
-              <div className="detail-title"><div><h2>{selected.name} 해수욕장</h2><p>{selected.area} · 오늘 {selected.update} 기준</p></div><span className={`big-status ${risk === "방문 좋아요" ? "safe-bg" : risk === "주의 필요" ? "warn-bg" : "danger-bg"}`}>{risk}</span></div>
-              <div className="advice"><span>!</span><p><b>{selected.sandTemp >= 43 ? "모래가 매우 뜨거워요" : selected.jellyfish === "위험" ? "해파리 출몰 위험이 높아요" : "짧은 해변 활동은 괜찮아요"}</b><br />{selected.sandTemp >= 43 ? "맨발 보행을 피하고 오전이나 늦은 오후 방문을 권해요." : selected.jellyfish === "위험" ? "입수는 피하고 현장 안전요원의 안내를 확인하세요." : "그늘에서 자주 쉬고, 현장 안전 방송을 확인하세요."}</p></div>
-              <div className="detail-stats">
-                <div><span className="mini-icon heat">⌁</span><p>모래 온도<small>화상 주의 기준 43°</small></p><b>{selected.sandTemp}°</b></div>
-                <div><span className="mini-icon water">≈</span><p>파도 높이<small>주의 기준 1.2m</small></p><b>{selected.wave}m</b></div>
-                <div><span className="mini-icon shade">◒</span><p>그늘 지수<small>주변 쉼터 가용도</small></p><b>{selected.shade}%</b></div>
-                <div><span className="mini-icon jelly-icon">⌇</span><p>해파리<small>{selected.jellySpot}</small></p><b className="text-status"><StatusDot level={selected.jellyfish} />{selected.jellyfish}</b></div>
-              </div>
-            </div>
-            <aside className="shade-panel">
-              <div className="shade-head"><div><p className="eyebrow">COOL SPOTS</p><h3>가까운 그늘 찾기</h3></div><span>{selected.shadeSpots.length}곳</span></div>
-              <BeachMap beach={selected} userPosition={userPosition} />
-              <ol className="spot-list">{selected.shadeSpots.map((spot, index) => <li key={spot.name}><span>{index + 1}</span><p><b>{spot.name}</b><small>{spot.detail}</small></p><em>도보 {spot.walk}</em></li>)}</ol>
-            </aside>
-          </div>
+      <section className="exposure" id="timer"><div className="exposure-copy"><p className="eyebrow">SUN SAFETY</p><h2>{t.monitor}</h2><p>{t.monitorSub}</p><div className={`location-status ${located ? "ok" : ""}`}><span>◎</span>{locationText || "위치를 확인하면 타이머가 시작돼요"}</div></div><div className="timer-card"><div className="timer-ring" style={{ "--progress": `${Math.min(seconds / 1200 * 360, 360)}deg` } as React.CSSProperties}><div><small>{t.exposure}</small><b>{formatTime(seconds)}</b><span>{seconds < 1200 ? `${t.next} ${Math.ceil((1200 - seconds) / 60)}${t.min}` : "휴식이 필요해요"}</span></div></div><div className="timer-actions">{seconds === 0 ? <button className="primary" onClick={startLocation}>◎ {t.locate}</button> : <button className="primary" onClick={() => setRunning(!running)}>{running ? "Ⅱ " + t.pause : "▶ " + t.resume}</button>}<button className="secondary" onClick={() => { setSeconds(0); setRunning(false); notificationSent.current = false; }}>{t.reset}</button><button className="text-button" onClick={allowNotification}>♢ {t.notify}</button></div></div></section>
 
-          <ExposureTracker beachName={`${selected.name} 해수욕장`} sandTemp={selected.sandTemp} onPosition={setUserPosition} />
-          <section className="jelly-aid" aria-labelledby="jelly-aid-title">
-            <div className="aid-title"><p className="eyebrow coral">JELLYFISH FIRST AID</p><h2 id="jelly-aid-title">해파리에 쏘였다면</h2><p>해변 안전요원에게 먼저 알리고, 증상이 심하면 즉시 119에 연락하세요.</p></div>
-            <ol><li><span>1</span><p><b>물 밖으로 이동</b><small>통증 부위를 만지거나 문지르지 마세요.</small></p></li><li><span>2</span><p><b>바닷물로 10분 이상 세척</b><small>수돗물·민물은 사용하지 마세요.</small></p></li><li><span>3</span><p><b>남은 촉수는 카드로 제거</b><small>맨손 대신 플라스틱 카드 가장자리를 사용하세요.</small></p></li><li><span>4</span><p><b>호흡곤란·어지럼증은 119</b><small>오심, 구토, 식은땀도 즉시 진료가 필요해요.</small></p></li></ol>
-            <p className="aid-source">질병관리청 물놀이 활동 손상 예방·응급처치 수칙을 바탕으로 정리했습니다.</p>
-          </section>
+      <section className="first-aid" id="aid"><div className="aid-intro"><p className="eyebrow coral">JELLYFISH FIRST AID</p><h2>{t.firstAid}</h2><p>심한 통증, 호흡곤란, 구토가 있으면 즉시 119에 신고하세요.</p></div><ol><li><b>01</b><span><strong>물 밖으로 이동</strong><small>환부를 문지르거나 만지지 마세요.</small></span></li><li><b>02</b><span><strong>바닷물로 충분히 세척</strong><small>수돗물이나 생수는 사용하지 마세요.</small></span></li><li><b>03</b><span><strong>촉수를 조심히 제거</strong><small>카드 모서리나 핀셋을 사용하세요.</small></span></li><li><b>04</b><span><strong>안전요원 또는 119</strong><small>전신 증상이 있으면 바로 도움을 요청하세요.</small></span></li></ol></section>
 
-          <div className="switch-banner">
-            <div className="umbrella" aria-hidden="true">⌁</div>
-            <div><p className="eyebrow">PLAN B</p><h2>바다가 부담스러운 날엔?</h2><p>뜨거움·높은 파도·해파리 위험을 피해 부산에서 즐길 수 있는 코스를 골랐어요.</p></div>
-            <button onClick={() => setTab("다른 놀거리")}>다른 놀거리 보기 <span>→</span></button>
-          </div>
-        </> : <AlternativeView onBack={() => setTab("해변 상황")} />}
-      </section>
-      <footer><div className="brand"><span className="brand-mark">⌁</span><span>바다어때</span></div><p>부산의 오늘을 더 시원하고 안전하게.</p><span>내장 예시 데이터 · 실제 방문 전 현장 안내를 확인하세요</span></footer>
-      <nav className="mobile-app-nav" aria-label="앱 메뉴"><button className={tab === "해변 상황" ? "current" : ""} onClick={() => { setTab("해변 상황"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><span>⌁</span>해변</button><button onClick={() => document.querySelector(".real-map-wrap")?.scrollIntoView({ behavior: "smooth", block: "center" })}><span>◎</span>지도</button><button className={tab === "다른 놀거리" ? "current" : ""} onClick={() => { setTab("다른 놀거리"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><span>◇</span>놀거리</button><button onClick={() => document.querySelector(".exposure-card")?.scrollIntoView({ behavior: "smooth", block: "center" })}><span>☀</span>안전</button></nav>
-    </main>
-  );
+      <section className="plan-b"><div className="umbrella">☂</div><div><p className="eyebrow">PLAN B, BUSAN</p><h2>{t.alternatives}</h2><p>폭염·높은 파도·해파리 위험이 크면 시원한 부산 실내 코스를 골라보세요.</p></div><button onClick={() => { setView("alternatives"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>{t.viewAlt} →</button></section>
+    </> : <AlternativeView t={t} onBack={() => setView("beaches")} />}
+    <footer><div className="brand static"><span className="mini-logo">뜨</span><span>뜨바다바<small>뜨거운 바다, 딴 바다로</small></span></div><p>{t.disclaimer}</p></footer>
+    <nav className="mobile-nav"><a href="#beaches">⌂<span>{t.navBeach}</span></a><a href="#timer">◴<span>{t.navTimer}</span></a><a href="#aid">＋<span>{t.navAid}</span></a></nav>
+  </main>;
 }
 
-function AlternativeView({ onBack }: { onBack: () => void }) {
-  return <section className="alternative-view">
-    <button className="back-link" onClick={onBack}>← 해변 상황으로</button>
-    <div className="alt-heading"><p className="eyebrow coral">PLAN B, BUSAN</p><h1>바다 말고도<br /><em>부산은 재밌으니까.</em></h1><p>폭염, 높은 파도, 해파리를 피해도 하루는 충분히 근사할 수 있어요.</p></div>
-    <div className="alt-grid">{alternatives.map((place, index) => <article className={`alt-card ${place.color}`} key={place.title}><span className="alt-number">0{index + 1}</span><span className="alt-tag">{place.tag}</span><div><small>{place.meta}</small><h2>{place.title}</h2><p>{place.reason}</p></div><button aria-label={`${place.title} 추천 이유 보기`}>추천 이유 <span>↗</span></button></article>)}</div>
-    <div className="rule-box"><b>추천 기준</b><p>모래 43°C 이상 · 파고 1.2m 이상 · 그늘 35% 미만 · 해파리 위험 중 하나라도 심각하면 실내 또는 야간 활동을 우선 추천합니다.</p></div>
-  </section>;
+function AlternativeView({ t, onBack }: { t: Record<string, string>; onBack: () => void }) {
+  const places = [
+    { n: "01", tag: "MEDIA", title: "뮤지엄 원", area: "해운대구", desc: "몰입형 미디어아트와 함께하는 시원한 실내 전시", cls: "violet" },
+    { n: "02", tag: "FREE", title: "부산현대미술관", area: "사하구", desc: "다대포와 가까운 무료 현대미술 전시", cls: "green" },
+    { n: "03", tag: "COOL", title: "영화의전당", area: "해운대구", desc: "독립영화와 탁 트인 실내 라운지", cls: "blue" },
+    { n: "04", tag: "FAMILY", title: "국립부산과학관", area: "기장군", desc: "아이와 함께하는 체험형 과학 전시", cls: "orange" },
+  ];
+  return <section className="alternative-page"><button className="back" onClick={onBack}>← {t.back}</button><div className="alt-hero"><p className="eyebrow coral">PLAN B, BUSAN</p><h1>바다 말고도,<br/><em>부산은 시원하니까.</em></h1><p>뜨거운 모래와 높은 파도 대신 가까운 실내 활동을 추천해요.</p></div><div className="alt-grid">{places.map((p) => <article key={p.n} className={p.cls}><div><span>{p.n}</span><em>{p.tag}</em></div><small>{p.area} · 실내</small><h2>{p.title}</h2><p>{p.desc}</p><button>자세히 보기 →</button></article>)}</div></section>;
 }
