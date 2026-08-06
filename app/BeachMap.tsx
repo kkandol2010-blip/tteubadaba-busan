@@ -61,19 +61,19 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
   const [lat, lng] = beach.coordinate;
   const beachLayout:Record<string,{sand:[number,number];sea:[number,number];shade:[number,number]}>={
     // Dadaepo faces south-west; Imrang faces east. These use their own shoreline positions.
-    dadaepo:{sand:[35.04685,128.96315],sea:[35.04605,128.96195],shade:[35.04805,128.96485]},
+    dadaepo:{sand:[35.04770,128.96450],sea:[35.04690,128.96330],shade:[35.04805,128.96485]},
     imrang:{sand:[35.3196,129.2660],sea:[35.3194,129.2669],shade:[35.3202,129.2654]},
   };
   const layout=beachLayout[beach.id]??{sand:[lat + .00030,lng - .00010] as [number,number],sea:[lat - .00135,lng + .0028] as [number,number],shade:[lat + .00125,lng + .00135] as [number,number]};
   const sunPosition:[number,number]=[layout.sand[0] + .00035,layout.sand[1] + .00025];
-  const sharedDadaepoPosition=beach.id==="dadaepo"?sunPosition:null;
+  const sharedDadaepoPosition=beach.id==="dadaepo"?layout.sand:null;
   const points:{kind:Extract<InfoKind,"sand"|"wave"|"jelly"|"shade"|"timer">; emoji:string; position:[number,number]; label:string}[] = [
     // Temperature and sun timer: dry sand area. Jellyfish: offshore water. Shade: land-side shade area.
     { kind:"sand", emoji:"🌡️", position:sharedDadaepoPosition??layout.sand, label:`${labels.sand} ${beach.sand}°C` },
     { kind:"wave", emoji:"🌊", position:sharedDadaepoPosition??layout.sea, label:`${labels.wave} ${beach.wave}m` },
     { kind:"jelly", emoji:"\u{1FABC}", position:sharedDadaepoPosition??[layout.sea[0] - .00025,layout.sea[1] + .00030], label:`${labels.jelly} ${beach.jellyArea}` },
-    { kind:"shade", emoji:"🌳", position:layout.shade, label:`${labels.shade} 1` },
-    { kind:"timer", emoji:"☀️", position:sunPosition, label:labels.timer },
+    { kind:"shade", emoji:"🌳", position:sharedDadaepoPosition??layout.shade, label:`${labels.shade} 1` },
+    { kind:"timer", emoji:"☀️", position:sharedDadaepoPosition??sunPosition, label:labels.timer },
   ];
   const color = beach.jelly === "danger" ? "#d6534b" : beach.jelly === "caution" ? "#d99c23" : "#1b8b6d";
   return <div className="real-map-wrap" aria-label={`${beach.ko} 실제 지도`}>
