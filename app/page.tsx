@@ -64,7 +64,7 @@ const NEARBY_PLACES:Record<string,Place[]>={
 };
 
 // A local, royalty-free style travel photo keeps recommendation photos reliable offline.
-Object.values(NEARBY_PLACES).flat().forEach(place=>{place.image="/free-places/coastal-promenade.png"});
+Object.values(NEARBY_PLACES).flat().forEach(place=>{place.image=`${import.meta.env.BASE_URL}free-places/coastal-promenade.png`});
 
 const PLACE_TRANSLATIONS:Record<string,Record<Exclude<Lang,"ko">,{name:string;meta:string}>>={
   "더베이101":{en:{name:"The Bay 101",meta:"Haeundae · about 1 km"},zh:{name:"The Bay 101",meta:"海云台 · 约1公里"},ja:{name:"The Bay 101",meta:"海雲台 · 約1km"},fr:{name:"The Bay 101",meta:"Haeundae · env. 1 km"}},
