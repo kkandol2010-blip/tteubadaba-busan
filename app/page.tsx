@@ -1,20 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import BeachMap from "./BeachMap";
 
 type Lang = "ko" | "en" | "zh" | "ja" | "fr";
 type InfoKind = "sand" | "wave" | "jelly" | "shade" | "timer" | "aid" | "plan";
 type Risk = "safe" | "caution" | "danger";
 
-type Beach = { id:string; ko:string; en:string; district:string; sand:number; wave:number; jelly:Risk; jellyArea:string; shade:{name:string; detail:string; walk:number}[] };
+type Beach = { id:string; ko:string; en:string; district:string; coordinate:[number,number]; sand:number; wave:number; jelly:Risk; jellyArea:string; shade:{name:string; detail:string; walk:number}[] };
 const beaches:Beach[] = [
-  {id:"haeundae",ko:"해운대",en:"Haeundae",district:"해운대구",sand:42,wave:.8,jelly:"caution",jellyArea:"미포 방파제 인근",shade:[{name:"해운대 광장 그늘막",detail:"5번 망루 뒤편",walk:2},{name:"동백섬 산책로",detail:"수목 그늘 구간",walk:7}]},
-  {id:"gwangalli",ko:"광안리",en:"Gwangalli",district:"수영구",sand:39,wave:.5,jelly:"safe",jellyArea:"관측 없음",shade:[{name:"만남의 광장",detail:"중앙 음수대 옆",walk:3},{name:"민락수변공원",detail:"해변 북쪽 수목",walk:8}]},
-  {id:"songjeong",ko:"송정",en:"Songjeong",district:"해운대구",sand:44,wave:1.4,jelly:"caution",jellyArea:"죽도공원 앞 수역",shade:[{name:"죽도공원 입구",detail:"송일정 아래",walk:5},{name:"중앙 안내소",detail:"3번 망루 맞은편",walk:2}]},
-  {id:"songdo",ko:"송도",en:"Songdo",district:"서구",sand:38,wave:.4,jelly:"safe",jellyArea:"관측 없음",shade:[{name:"송림공원",detail:"케이블카 하부",walk:4},{name:"분수광장 차양",detail:"중앙 안내소 옆",walk:2}]},
-  {id:"dadaepo",ko:"다대포",en:"Dadaepo",district:"사하구",sand:41,wave:.7,jelly:"danger",jellyArea:"몰운대·낙동강 하구",shade:[{name:"해변공원 소나무숲",detail:"낙조분수 서편",walk:5},{name:"생태탐방로 쉼터",detail:"고우니길 2번 데크",walk:9}]},
-  {id:"ilgwang",ko:"일광",en:"Ilgwang",district:"기장군",sand:43,wave:1,jelly:"caution",jellyArea:"학리항 인근",shade:[{name:"이천쉼터",detail:"해변 남쪽 산책로",walk:8},{name:"중앙 안내소 차양",detail:"해변 진입광장",walk:2}]},
-  {id:"imrang",ko:"임랑",en:"Imrang",district:"기장군",sand:37,wave:.6,jelly:"safe",jellyArea:"관측 없음",shade:[{name:"임랑행정봉사실",detail:"해변 중앙 쉼터",walk:3},{name:"임랑공원 수목",detail:"주차장 맞은편",walk:6}]},
+  {id:"haeundae",ko:"해운대",en:"Haeundae",district:"해운대구",coordinate:[35.1587,129.1604],sand:42,wave:.8,jelly:"caution",jellyArea:"미포 방파제 인근",shade:[{name:"해운대 광장 그늘막",detail:"5번 망루 뒤편",walk:2},{name:"동백섬 산책로",detail:"수목 그늘 구간",walk:7}]},
+  {id:"gwangalli",ko:"광안리",en:"Gwangalli",district:"수영구",coordinate:[35.1531,129.1186],sand:39,wave:.5,jelly:"safe",jellyArea:"관측 없음",shade:[{name:"만남의 광장",detail:"중앙 음수대 옆",walk:3},{name:"민락수변공원",detail:"해변 북쪽 수목",walk:8}]},
+  {id:"songjeong",ko:"송정",en:"Songjeong",district:"해운대구",coordinate:[35.1798,129.1997],sand:44,wave:1.4,jelly:"caution",jellyArea:"죽도공원 앞 수역",shade:[{name:"죽도공원 입구",detail:"송일정 아래",walk:5},{name:"중앙 안내소",detail:"3번 망루 맞은편",walk:2}]},
+  {id:"songdo",ko:"송도",en:"Songdo",district:"서구",coordinate:[35.0765,129.0172],sand:38,wave:.4,jelly:"safe",jellyArea:"관측 없음",shade:[{name:"송림공원",detail:"케이블카 하부",walk:4},{name:"분수광장 차양",detail:"중앙 안내소 옆",walk:2}]},
+  {id:"dadaepo",ko:"다대포",en:"Dadaepo",district:"사하구",coordinate:[35.0483,128.9652],sand:41,wave:.7,jelly:"danger",jellyArea:"몰운대·낙동강 하구",shade:[{name:"해변공원 소나무숲",detail:"낙조분수 서편",walk:5},{name:"생태탐방로 쉼터",detail:"고우니길 2번 데크",walk:9}]},
+  {id:"ilgwang",ko:"일광",en:"Ilgwang",district:"기장군",coordinate:[35.2633,129.2338],sand:43,wave:1,jelly:"caution",jellyArea:"학리항 인근",shade:[{name:"이천쉼터",detail:"해변 남쪽 산책로",walk:8},{name:"중앙 안내소 차양",detail:"해변 진입광장",walk:2}]},
+  {id:"imrang",ko:"임랑",en:"Imrang",district:"기장군",coordinate:[35.3197,129.2659],sand:37,wave:.6,jelly:"safe",jellyArea:"관측 없음",shade:[{name:"임랑행정봉사실",detail:"해변 중앙 쉼터",walk:3},{name:"임랑공원 수목",detail:"주차장 맞은편",walk:6}]},
 ];
 const languageNames:{id:Lang; native:string; english:string}[]=[{id:"ko",native:"한국어",english:"Korean"},{id:"en",native:"English",english:"English"},{id:"zh",native:"中文",english:"Chinese"},{id:"ja",native:"日本語",english:"Japanese"},{id:"fr",native:"Français",english:"French"}];
 const labels:Record<Lang,Record<string,string>>={
@@ -36,20 +37,13 @@ export default function Home(){
  if(!entered)return <Welcome lang={lang} setLang={setLang} onStart={()=>setEntered(true)}/>;
  return <main className="map-app"><header className="map-header"><button className="brand" onClick={()=>setInfo("sand")}><span className="logo-mini">뜨</span><span>뜨바다바<small>뜨거운 바다, 딴 바다로</small></span></button><p><i/> {t.guide}</p><button className="language-button" onClick={()=>setEntered(false)}>文 {t.change}</button></header>
   <section className="map-toolbar"><div className="beach-tabs">{beaches.map(b=><button key={b.id} className={b.id===beachId?"active":""} onClick={()=>setBeachId(b.id)}><i className={riskOf(b)}/>{lang==="ko"?b.ko:b.en}</button>)}</div><small>● 오늘 14:10 · 시연용 데이터</small></section>
-  <section className="map-stage"><div className="map-title"><p>BUSAN BEACH MAP</p><h1>{lang==="ko"?beach.ko:beach.en} <span>Beach</span></h1><small>{t.tap}</small></div><div className="coastline"><span className="land land-a"/><span className="land land-b"/><span className="road road-one"/><span className="road road-two"/><span className="water-label">BUSAN SEA</span><span className="wave-line wave-one"/><span className="wave-line wave-two"/><span className="wave-line wave-three"/>
-   <MapIcon kind="sand" emoji="🌡️" label={t.sand} active={info==="sand"} onClick={()=>setInfo("sand")} pos="icon-sand"/>
-   <MapIcon kind="wave" emoji="🌊" label={t.wave} active={info==="wave"} onClick={()=>setInfo("wave")} pos="icon-wave"/>
-   <MapIcon kind="jelly" emoji="🪼" label={t.jelly} active={info==="jelly"} onClick={()=>setInfo("jelly")} pos="icon-jelly"/>
-   <MapIcon kind="shade" emoji="🌳" label={t.shade} active={info==="shade"} onClick={()=>setInfo("shade")} pos="icon-shade"/>
-   <MapIcon kind="timer" emoji="☀️" label={t.timer} active={info==="timer"} onClick={()=>setInfo("timer")} pos="icon-timer"/>
-  </div></section>
+  <section className="map-stage"><div className="map-title"><p>BUSAN BEACH MAP</p><h1>{lang==="ko"?beach.ko:beach.en} <span>Beach</span></h1><small>{t.tap}</small></div><BeachMap beach={beach} beaches={beaches} activeInfo={info} onBeachSelect={setBeachId} onInfoSelect={setInfo}/></section>
   <section className="info-dock">{info==="sand"&&<SandCard beach={beach} t={t}/>} {info==="wave"&&<WaveCard beach={beach} t={t}/>} {info==="jelly"&&<JellyCard beach={beach} t={t} goAid={()=>setInfo("aid")}/>} {info==="shade"&&<ShadeCard beach={beach} t={t}/>} {info==="timer"&&<TimerCard t={t} seconds={seconds} running={running} location={location} begin={begin} toggle={()=>setRunning(!running)} reset={()=>{setSeconds(0);setRunning(false);notified.current=false}}/>} {info==="aid"&&<AidCard/>} {info==="plan"&&<PlanCard/>}</section>
   <nav className="quick-nav"><button onClick={()=>setInfo("aid")}>✚<span>{t.aid}</span></button><button onClick={()=>setInfo("timer")}>☀<span>{t.timer}</span></button><button onClick={()=>setInfo("plan")}>⌂<span>{t.plan}</span></button></nav>
  </main>
 }
 
 function Welcome({lang,setLang,onStart}:{lang:Lang;setLang:(l:Lang)=>void;onStart:()=>void}){const t=labels[lang];return <main className="welcome"><div className="welcome-sun"/><div className="welcome-wave wave-a"/><div className="welcome-wave wave-b"/><section className="welcome-card"><div className="logo-mark">뜨</div><p className="logo-title">뜨바다바</p><p className="logo-sub">뜨거운 바다, 딴 바다로</p><div className="language-box"><h1>{t.choose}</h1><p>{t.sub}</p><div className="language-list">{languageNames.map(l=><button key={l.id} className={lang===l.id?"chosen":""} onClick={()=>setLang(l.id)}><span>{l.native}</span><small>{l.english}</small><b>{lang===l.id?"✓":"›"}</b></button>)}</div><button className="primary wide" onClick={onStart}>{t.start} →</button></div></section></main>}
-function MapIcon({emoji,label,active,onClick,pos}:{kind:InfoKind;emoji:string;label:string;active:boolean;onClick:()=>void;pos:string}){return <button aria-label={label} className={`map-icon ${pos} ${active?"active":""}`} onClick={onClick}><span>{emoji}</span><b>{label}</b></button>}
 function RiskPill({risk,t}:{risk:Risk;t:Record<string,string>}){return <em className={`risk ${risk}`}>{t[risk]}</em>}
 function SandCard({beach,t}:{beach:Beach;t:Record<string,string>}){const hot=beach.sand>=43;return <div className="detail-card sand-card"><div className="card-icon">🌡️</div><div><p>{t.sand}</p><h2>{beach.sand}<small>°C</small></h2><span>{hot?"맨발 화상 위험이 있어요. 아쿠아슈즈를 신어 주세요.":"모래가 뜨거울 수 있어요. 맨발 이동은 짧게 해주세요."}</span></div><RiskPill risk={hot?"danger":"caution"} t={t}/></div>}
 function WaveCard({beach,t}:{beach:Beach;t:Record<string,string>}){const r:Risk=beach.wave>=1.3?"danger":beach.wave>=.8?"caution":"safe";return <div className="detail-card wave-card"><div className="card-icon">🌊</div><div><p>{t.wave}</p><h2>{beach.wave}<small>m</small></h2><span>{r==="danger"?"파도가 높습니다. 입수보다 해변 산책을 추천해요.":"안전요원의 안내 방송을 확인하고 물놀이하세요."}</span></div><RiskPill risk={r} t={t}/></div>}
