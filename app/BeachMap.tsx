@@ -72,7 +72,8 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
     sand: [35.04560, 128.96520] as [number,number],
     timer: [35.04860, 128.97180] as [number,number],
     wave: [35.04160, 128.96250] as [number,number],
-    jelly: [35.04160, 128.96870] as [number,number],
+    // Offshore blue-water area, kept separate from the wave marker.
+    jelly: [35.04160, 128.95800] as [number,number],
     shade: [35.05620, 128.96560] as [number,number],
   } : null;
   const points:{kind:Extract<InfoKind,"sand"|"wave"|"jelly"|"shade"|"timer">; emoji:string; position:[number,number]; label:string}[] = [
