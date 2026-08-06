@@ -67,7 +67,7 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
   const layout=beachLayout[beach.id]??{sand:[lat + .00030,lng - .00010] as [number,number],sea:[lat - .00135,lng + .0028] as [number,number],shade:[lat + .00125,lng + .00135] as [number,number]};
   const sunPosition:[number,number]=[layout.sand[0] + .00035,layout.sand[1] + .00025];
   // Dadaepo uses a closer map view so each marker stays in its real beach/sea area and remains tappable.
-  const dadaepoPositions = beach.id === "dadaepo" ? {
+  const specialPositions = beach.id === "dadaepo" ? {
     // Center of the yellow sand strip shown for Dadaepo Beach on the base map.
     sand: [35.04560, 128.96520] as [number,number],
     // Keep the sun-exposure control alongside the beach safety markers, without covering the thermometer.
@@ -76,20 +76,27 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
     // Offshore blue-water area, kept separate from the wave marker.
     jelly: [35.04160, 128.95800] as [number,number],
     shade: [35.05620, 128.96560] as [number,number],
+  } : beach.id === "imrang" ? {
+    // Imrang Beach's mapped sand strip runs north-to-south; put both heat controls on it.
+    sand: [35.32130, 129.26750] as [number,number],
+    timer: [35.31580, 129.26750] as [number,number],
+    wave: [35.31900, 129.27050] as [number,number],
+    jelly: [35.31650, 129.27100] as [number,number],
+    shade: [35.32300, 129.26450] as [number,number],
   } : null;
   const points:{kind:Extract<InfoKind,"sand"|"wave"|"jelly"|"shade"|"timer">; emoji:string; position:[number,number]; label:string}[] = [
     // Temperature and sun timer: dry sand area. Wave and jellyfish: separate offshore water points.
-    { kind:"sand", emoji:"🌡️", position:dadaepoPositions?.sand ?? layout.sand, label:`${labels.sand} ${beach.sand}°C` },
-    { kind:"wave", emoji:"🌊", position:dadaepoPositions?.wave ?? layout.sea, label:`${labels.wave} ${beach.wave}m` },
-    { kind:"jelly", emoji:"\u{1FABC}", position:dadaepoPositions?.jelly ?? [layout.sea[0] - .00025,layout.sea[1] + .00030], label:`${labels.jelly} ${beach.jellyArea}` },
-    { kind:"shade", emoji:"🌳", position:dadaepoPositions?.shade ?? layout.shade, label:`${labels.shade} 1` },
-    { kind:"timer", emoji:"☀️", position:dadaepoPositions?.timer ?? sunPosition, label:labels.timer },
+    { kind:"sand", emoji:"🌡️", position:specialPositions?.sand ?? layout.sand, label:`${labels.sand} ${beach.sand}°C` },
+    { kind:"wave", emoji:"🌊", position:specialPositions?.wave ?? layout.sea, label:`${labels.wave} ${beach.wave}m` },
+    { kind:"jelly", emoji:"\u{1FABC}", position:specialPositions?.jelly ?? [layout.sea[0] - .00025,layout.sea[1] + .00030], label:`${labels.jelly} ${beach.jellyArea}` },
+    { kind:"shade", emoji:"🌳", position:specialPositions?.shade ?? layout.shade, label:`${labels.shade} 1` },
+    { kind:"timer", emoji:"☀️", position:specialPositions?.timer ?? sunPosition, label:labels.timer },
   ];
   const color = beach.jelly === "danger" ? "#d6534b" : beach.jelly === "caution" ? "#d99c23" : "#1b8b6d";
   return <div className="real-map-wrap" aria-label={`${beach.ko} 실제 지도`}>
     <MapContainer center={[35.153,129.095]} zoom={11.4} minZoom={10.5} maxBounds={[[34.98,128.84],[35.38,129.38]]} maxBoundsViscosity={1} scrollWheelZoom={true} className="real-map" zoomControl={false}>
       <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      <FlyToBeach center={beach.coordinate} placeFocus={placeFocus} zoom={beach.id === "dadaepo" ? 14 : 12.2} />
+      <FlyToBeach center={beach.coordinate} placeFocus={placeFocus} zoom={beach.id === "dadaepo" || beach.id === "imrang" ? 14 : 12.2} />
       <FlyToNearbyPlace />
       {beaches.map(b => <CircleMarker key={b.id} center={b.coordinate} radius={b.id===beach.id?8:5} pathOptions={{ color:"#fff", weight:2, fillColor:b.id===beach.id?"#f36e50":"#173f56", fillOpacity:1 }} eventHandlers={{ click:()=>onBeachSelect(b.id) }}>
         <Popup><b>{b.en}</b><br/>{labels.tap}</Popup>
