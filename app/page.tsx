@@ -62,6 +62,21 @@ const NEARBY_PLACES:Record<string,Place[]>={
   ilgwang:[{icon:"🍜",name:"기장시장",meta:"일광 · 차로 약 15분",image:"https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80"},{icon:"🏖️",name:"일광 해안산책로",meta:"일광 · 해변 인근",image:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80"}],
   imrang:[{icon:"⛪",name:"죽성드림성당",meta:"임랑 · 차로 약 10분",image:"https://images.unsplash.com/photo-1520637836862-4d197d17c90a?auto=format&fit=crop&w=900&q=80"},{icon:"🍜",name:"기장시장",meta:"임랑 · 차로 약 15분",image:"https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80"}],
 };
+
+// User-provided photographs of the actual nearby destinations.
+const LOCAL_PLACE_IMAGES:Record<string,string>={
+  "동백섬":"/places/dongbaekseom.jpg",
+  "민락수변공원":"/places/millak-waterfront.jpg",
+  "해동용궁사":"/places/haedong-yonggungsa.jpg",
+  "청사포 다릿돌전망대":"/places/cheongsapo-observatory.jpg",
+  "송도해상케이블카":"/places/songdo-cable-car.jpg",
+  "암남공원":"/places/amnam-park.jpg",
+  "꿈의 낙조분수":"/places/dadaepo-fountain.jpg",
+  "다대포 해변공원":"/places/dadaepo-wetland.jpg",
+  "기장시장":"/places/gijang-market.jpg",
+  "죽성드림성당":"/places/jukseong-church.jpg",
+};
+Object.values(NEARBY_PLACES).flat().forEach(place=>{if(LOCAL_PLACE_IMAGES[place.name])place.image=LOCAL_PLACE_IMAGES[place.name]});
 const PLACE_TRANSLATIONS:Record<string,Record<Exclude<Lang,"ko">,{name:string;meta:string}>>={
   "더베이101":{en:{name:"The Bay 101",meta:"Haeundae · about 1 km"},zh:{name:"The Bay 101",meta:"海云台 · 约1公里"},ja:{name:"The Bay 101",meta:"海雲台 · 約1km"},fr:{name:"The Bay 101",meta:"Haeundae · env. 1 km"}},
   "동백섬":{en:{name:"Dongbaekseom Island",meta:"Haeundae · shaded walk"},zh:{name:"冬柏岛",meta:"海云台 · 林荫步道"},ja:{name:"冬柏島",meta:"海雲台 · 木陰の散策路"},fr:{name:"Île Dongbaekseom",meta:"Haeundae · promenade ombragée"}},
