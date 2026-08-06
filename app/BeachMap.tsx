@@ -66,14 +66,13 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
   };
   const layout=beachLayout[beach.id]??{sand:[lat + .00030,lng - .00010] as [number,number],sea:[lat - .00135,lng + .0028] as [number,number],shade:[lat + .00125,lng + .00135] as [number,number]};
   const sunPosition:[number,number]=[layout.sand[0] + .00035,layout.sand[1] + .00025];
-  const sharedDadaepoPosition=beach.id==="dadaepo"?layout.sand:null;
   const points:{kind:Extract<InfoKind,"sand"|"wave"|"jelly"|"shade"|"timer">; emoji:string; position:[number,number]; label:string}[] = [
-    // Temperature and sun timer: dry sand area. Jellyfish: offshore water. Shade: land-side shade area.
-    { kind:"sand", emoji:"🌡️", position:sharedDadaepoPosition??layout.sand, label:`${labels.sand} ${beach.sand}°C` },
-    { kind:"wave", emoji:"🌊", position:sharedDadaepoPosition??layout.sea, label:`${labels.wave} ${beach.wave}m` },
-    { kind:"jelly", emoji:"\u{1FABC}", position:sharedDadaepoPosition??[layout.sea[0] - .00025,layout.sea[1] + .00030], label:`${labels.jelly} ${beach.jellyArea}` },
-    { kind:"shade", emoji:"🌳", position:sharedDadaepoPosition??layout.shade, label:`${labels.shade} 1` },
-    { kind:"timer", emoji:"☀️", position:sharedDadaepoPosition??sunPosition, label:labels.timer },
+    // Temperature and sun timer: dry sand area. Wave and jellyfish: separate offshore water points.
+    { kind:"sand", emoji:"🌡️", position:layout.sand, label:`${labels.sand} ${beach.sand}°C` },
+    { kind:"wave", emoji:"🌊", position:layout.sea, label:`${labels.wave} ${beach.wave}m` },
+    { kind:"jelly", emoji:"\u{1FABC}", position:[layout.sea[0] - .00025,layout.sea[1] + .00030], label:`${labels.jelly} ${beach.jellyArea}` },
+    { kind:"shade", emoji:"🌳", position:layout.shade, label:`${labels.shade} 1` },
+    { kind:"timer", emoji:"☀️", position:sunPosition, label:labels.timer },
   ];
   const color = beach.jelly === "danger" ? "#d6534b" : beach.jelly === "caution" ? "#d99c23" : "#1b8b6d";
   return <div className="real-map-wrap" aria-label={`${beach.ko} 실제 지도`}>
