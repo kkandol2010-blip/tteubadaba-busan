@@ -63,6 +63,9 @@ const NEARBY_PLACES:Record<string,Place[]>={
   imrang:[{icon:"⛪",name:"죽성드림성당",meta:"임랑 · 차로 약 10분",image:"https://images.unsplash.com/photo-1520637836862-4d197d17c90a?auto=format&fit=crop&w=900&q=80"},{icon:"🍜",name:"기장시장",meta:"임랑 · 차로 약 15분",image:"https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80"}],
 };
 
+// A local, royalty-free style travel photo keeps recommendation photos reliable offline.
+Object.values(NEARBY_PLACES).flat().forEach(place=>{place.image="/free-places/coastal-promenade.png"});
+
 const PLACE_TRANSLATIONS:Record<string,Record<Exclude<Lang,"ko">,{name:string;meta:string}>>={
   "더베이101":{en:{name:"The Bay 101",meta:"Haeundae · about 1 km"},zh:{name:"The Bay 101",meta:"海云台 · 约1公里"},ja:{name:"The Bay 101",meta:"海雲台 · 約1km"},fr:{name:"The Bay 101",meta:"Haeundae · env. 1 km"}},
   "동백섬":{en:{name:"Dongbaekseom Island",meta:"Haeundae · shaded walk"},zh:{name:"冬柏岛",meta:"海云台 · 林荫步道"},ja:{name:"冬柏島",meta:"海雲台 · 木陰の散策路"},fr:{name:"Île Dongbaekseom",meta:"Haeundae · promenade ombragée"}},
