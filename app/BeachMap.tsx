@@ -70,7 +70,8 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
   const dadaepoPositions = beach.id === "dadaepo" ? {
     // Center of the yellow sand strip shown for Dadaepo Beach on the base map.
     sand: [35.04560, 128.96520] as [number,number],
-    timer: [35.04860, 128.97180] as [number,number],
+    // Keep the sun-exposure control alongside the beach safety markers, without covering the thermometer.
+    timer: [35.04580, 128.97120] as [number,number],
     wave: [35.04160, 128.96250] as [number,number],
     // Offshore blue-water area, kept separate from the wave marker.
     jelly: [35.04160, 128.95800] as [number,number],
