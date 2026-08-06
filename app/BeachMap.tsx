@@ -13,7 +13,7 @@ type Props = { beach:Beach; beaches:Beach[]; labels:Record<string,string>; activ
 
 function FlyToBeach({ center }:{center:[number,number]}) {
   const map = useMap();
-  useEffect(() => { map.flyTo(center, 13.5, { duration: .65 }); }, [center, map]);
+  useEffect(() => { map.flyTo(center, 12.2, { duration: .65 }); }, [center, map]);
   return null;
 }
 
@@ -37,7 +37,7 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, onBeachSe
   ];
   const color = beach.jelly === "danger" ? "#d6534b" : beach.jelly === "caution" ? "#d99c23" : "#1b8b6d";
   return <div className="real-map-wrap" aria-label={`${beach.ko} 실제 지도`}>
-    <MapContainer center={beach.coordinate} zoom={13.5} scrollWheelZoom={true} className="real-map" zoomControl={false}>
+    <MapContainer center={[35.153,129.095]} zoom={11.4} minZoom={10.5} maxBounds={[[34.98,128.84],[35.38,129.38]]} maxBoundsViscosity={1} scrollWheelZoom={true} className="real-map" zoomControl={false}>
       <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <FlyToBeach center={beach.coordinate} />
       {beaches.map(b => <CircleMarker key={b.id} center={b.coordinate} radius={b.id===beach.id?8:5} pathOptions={{ color:"#fff", weight:2, fillColor:b.id===beach.id?"#f36e50":"#173f56", fillOpacity:1 }} eventHandlers={{ click:()=>onBeachSelect(b.id) }}>
