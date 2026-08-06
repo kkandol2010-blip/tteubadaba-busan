@@ -11,9 +11,9 @@ type Beach = { id:string; ko:string; en:string; coordinate:[number,number]; sand
 
 type Props = { beach:Beach; beaches:Beach[]; labels:Record<string,string>; activeInfo:InfoKind; placeFocus?:[number,number]|null; onBeachSelect:(id:string)=>void; onInfoSelect:(kind:InfoKind)=>void };
 
-function FlyToBeach({ center, placeFocus }:{center:[number,number];placeFocus?:[number,number]|null}) {
+function FlyToBeach({ center, placeFocus, zoom=12.2 }:{center:[number,number];placeFocus?:[number,number]|null;zoom?:number}) {
   const map = useMap();
-  useEffect(() => { map.flyTo(placeFocus ?? center, placeFocus ? 15 : 12.2, { duration: .65 }); }, [center, map, placeFocus]);
+  useEffect(() => { map.flyTo(placeFocus ?? center, placeFocus ? 15 : zoom, { duration: .65 }); }, [center, map, placeFocus, zoom]);
   return null;
 }
 
@@ -66,13 +66,13 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
   };
   const layout=beachLayout[beach.id]??{sand:[lat + .00030,lng - .00010] as [number,number],sea:[lat - .00135,lng + .0028] as [number,number],shade:[lat + .00125,lng + .00135] as [number,number]};
   const sunPosition:[number,number]=[layout.sand[0] + .00035,layout.sand[1] + .00025];
-  // Dadaepo is a wide shoreline. Keep every control well apart so no marker blocks another.
+  // Dadaepo uses a closer map view so each marker stays in its real beach/sea area and remains tappable.
   const dadaepoPositions = beach.id === "dadaepo" ? {
-    sand: [35.04835, 128.95800] as [number,number],
-    timer: [35.04835, 128.97200] as [number,number],
-    wave: [35.04380, 128.95800] as [number,number],
-    jelly: [35.04380, 128.97200] as [number,number],
-    shade: [35.05700, 128.96500] as [number,number],
+    sand: [35.04860, 128.96250] as [number,number],
+    timer: [35.04860, 128.96870] as [number,number],
+    wave: [35.04160, 128.96250] as [number,number],
+    jelly: [35.04160, 128.96870] as [number,number],
+    shade: [35.05620, 128.96560] as [number,number],
   } : null;
   const points:{kind:Extract<InfoKind,"sand"|"wave"|"jelly"|"shade"|"timer">; emoji:string; position:[number,number]; label:string}[] = [
     // Temperature and sun timer: dry sand area. Wave and jellyfish: separate offshore water points.
@@ -86,7 +86,7 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
   return <div className="real-map-wrap" aria-label={`${beach.ko} 실제 지도`}>
     <MapContainer center={[35.153,129.095]} zoom={11.4} minZoom={10.5} maxBounds={[[34.98,128.84],[35.38,129.38]]} maxBoundsViscosity={1} scrollWheelZoom={true} className="real-map" zoomControl={false}>
       <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      <FlyToBeach center={beach.coordinate} placeFocus={placeFocus} />
+      <FlyToBeach center={beach.coordinate} placeFocus={placeFocus} zoom={beach.id === "dadaepo" ? 14 : 12.2} />
       <FlyToNearbyPlace />
       {beaches.map(b => <CircleMarker key={b.id} center={b.coordinate} radius={b.id===beach.id?8:5} pathOptions={{ color:"#fff", weight:2, fillColor:b.id===beach.id?"#f36e50":"#173f56", fillOpacity:1 }} eventHandlers={{ click:()=>onBeachSelect(b.id) }}>
         <Popup><b>{b.en}</b><br/>{labels.tap}</Popup>
