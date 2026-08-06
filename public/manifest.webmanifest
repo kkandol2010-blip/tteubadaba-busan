@@ -1,0 +1,11 @@
+{
+  "name": "바다어때 · 부산 해변 안전",
+  "short_name": "바다어때",
+  "description": "부산 해수욕장의 모래, 파도, 그늘, 해파리 안전 정보를 확인하세요.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#103753",
+  "theme_color": "#103753",
+  "lang": "ko-KR",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

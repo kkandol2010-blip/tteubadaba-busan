@@ -15,6 +15,7 @@ button { cursor:pointer; }
 .topbar nav button.active:after { content:""; position:absolute; height:3px; background:var(--coral); left:0; right:0; bottom:0; border-radius:3px 3px 0 0; }
 .header-right { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:#6b7c84; }
 .language-select select { border:1px solid #d5ddda; border-radius:16px; padding:5px 22px 5px 9px; background:#fff; color:var(--navy); font-size:11px; font-weight:800; }
+.install-button { border:0; border-radius:16px; background:var(--navy); color:#fff; padding:6px 10px; font-size:10px; font-weight:800; }
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 .live-dot { width:8px; height:8px; background:#31a47c; border-radius:50%; box-shadow:0 0 0 4px #dff3eb; }
 .round-button { border:1px solid #d8dfdf; width:34px; height:34px; border-radius:50%; background:#fff; color:var(--navy); margin-left:8px; }

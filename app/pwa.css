@@ -1,0 +1,11 @@
+.mobile-app-nav { display:none; }
+
+@media (max-width:650px) {
+  footer { padding-bottom:92px; }
+  .mobile-app-nav { position:fixed; z-index:50; bottom:0; left:0; right:0; height:72px; display:flex; justify-content:space-around; padding:8px 8px max(8px, env(safe-area-inset-bottom)); background:rgba(255,253,247,.97); box-shadow:0 -5px 18px rgba(20,47,60,.12); backdrop-filter:blur(12px); }
+  .mobile-app-nav button { flex:1; border:0; background:transparent; color:#829096; font-size:9px; font-weight:800; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .mobile-app-nav button span { font-size:19px; line-height:20px; }
+  .mobile-app-nav button.current { color:var(--coral); }
+}
+
+@media (display-mode:standalone) { .topbar { position:sticky; } }

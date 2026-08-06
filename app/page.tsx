@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BeachMap from "./BeachMap";
 import ExposureTracker from "./ExposureTracker";
 
@@ -61,6 +61,14 @@ export default function Home() {
   const [tab, setTab] = useState<"해변 상황" | "다른 놀거리">("해변 상황");
   const [language, setLanguage] = useState<"KO" | "EN">("KO");
   const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const [installPrompt, setInstallPrompt] = useState<{ prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> } | null>(null);
+  useEffect(() => {
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    const capture = (event: Event) => { event.preventDefault(); setInstallPrompt(event as unknown as { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> }); };
+    window.addEventListener("beforeinstallprompt", capture);
+    return () => window.removeEventListener("beforeinstallprompt", capture);
+  }, []);
+  const installApp = async () => { if (!installPrompt) return; await installPrompt.prompt(); await installPrompt.userChoice; setInstallPrompt(null); };
   const selected = beaches.find((beach) => beach.id === selectedId) ?? beaches[0];
   const filtered = useMemo(() => beaches.filter((beach) => {
     if (filter === "전체") return true;
@@ -77,7 +85,7 @@ export default function Home() {
         <nav aria-label="주요 메뉴">
           {(["해변 상황", "다른 놀거리"] as const).map((item) => <button key={item} className={tab === item ? "active" : ""} onClick={() => setTab(item)}>{item}</button>)}
         </nav>
-        <div className="header-right"><span className="live-dot" /> {language === "KO" ? "부산 해변 관측 중" : "Busan beach monitor"}<label className="language-select"><span className="sr-only">Language</span><select value={language} onChange={(event) => setLanguage(event.target.value as "KO" | "EN")}><option value="KO">한국어</option><option value="EN">EN</option></select></label><button className="round-button" aria-label="알림">◌</button></div>
+        <div className="header-right"><span className="live-dot" /> {language === "KO" ? "부산 해변 관측 중" : "Busan beach monitor"}{installPrompt && <button className="install-button" onClick={installApp}>앱 설치</button>}<label className="language-select"><span className="sr-only">Language</span><select value={language} onChange={(event) => setLanguage(event.target.value as "KO" | "EN")}><option value="KO">한국어</option><option value="EN">EN</option></select></label><button className="round-button" aria-label="알림">◌</button></div>
       </header>
 
       <section className="hero" id="top">
@@ -146,6 +154,7 @@ export default function Home() {
         </> : <AlternativeView onBack={() => setTab("해변 상황")} />}
       </section>
       <footer><div className="brand"><span className="brand-mark">⌁</span><span>바다어때</span></div><p>부산의 오늘을 더 시원하고 안전하게.</p><span>내장 예시 데이터 · 실제 방문 전 현장 안내를 확인하세요</span></footer>
+      <nav className="mobile-app-nav" aria-label="앱 메뉴"><button className={tab === "해변 상황" ? "current" : ""} onClick={() => { setTab("해변 상황"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><span>⌁</span>해변</button><button onClick={() => document.querySelector(".real-map-wrap")?.scrollIntoView({ behavior: "smooth", block: "center" })}><span>◎</span>지도</button><button className={tab === "다른 놀거리" ? "current" : ""} onClick={() => { setTab("다른 놀거리"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><span>◇</span>놀거리</button><button onClick={() => document.querySelector(".exposure-card")?.scrollIntoView({ behavior: "smooth", block: "center" })}><span>☀</span>안전</button></nav>
     </main>
   );
 }
