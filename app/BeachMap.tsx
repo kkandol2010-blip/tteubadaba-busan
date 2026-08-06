@@ -61,7 +61,7 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
   const [lat, lng] = beach.coordinate;
   const beachLayout:Record<string,{sand:[number,number];sea:[number,number];shade:[number,number]}>={
     // Dadaepo faces south-west; Imrang faces east. These use their own shoreline positions.
-    dadaepo:{sand:[35.0476,128.9641],sea:[35.0468,128.9629],shade:[35.0488,128.9658]},
+    dadaepo:{sand:[35.04685,128.96315],sea:[35.04605,128.96195],shade:[35.04805,128.96485]},
     imrang:{sand:[35.3196,129.2660],sea:[35.3194,129.2669],shade:[35.3202,129.2654]},
   };
   const layout=beachLayout[beach.id]??{sand:[lat + .00030,lng - .00010] as [number,number],sea:[lat - .00135,lng + .0028] as [number,number],shade:[lat + .00125,lng + .00135] as [number,number]};
