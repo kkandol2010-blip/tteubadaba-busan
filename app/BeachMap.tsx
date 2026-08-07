@@ -13,9 +13,15 @@ type RecommendedPlace = { id:string; name:string; photoTitle?:string; category:s
 
 type Props = { beach:Beach; beaches:Beach[]; labels:Record<string,string>; activeInfo:InfoKind; placeFocus?:[number,number]|null; userPosition?:[number,number]|null; recommendedPlaces?:RecommendedPlace[]; onBeachSelect:(id:string)=>void; onInfoSelect:(kind:InfoKind)=>void };
 
-function FlyToBeach({ center, placeFocus, zoom=12.2 }:{center:[number,number];placeFocus?:[number,number]|null;zoom?:number}) {
+function FlyToBeach({ center, placeFocus, markerPositions }:{center:[number,number];placeFocus?:[number,number]|null;markerPositions:[number,number][]}) {
   const map = useMap();
-  useEffect(() => { map.flyTo(placeFocus ?? center, placeFocus ? 15 : zoom, { duration: .65 }); }, [center, map, placeFocus, zoom]);
+  const markerKey=markerPositions.map(position=>position.join(",")).join("|");
+  useEffect(() => {
+    if(placeFocus){map.flyTo(placeFocus,15,{duration:.65});return}
+    // Fit only as close as possible while leaving every beach information icon visible.
+    const bounds=L.latLngBounds(markerPositions);
+    map.flyToBounds(bounds,{padding:[64,64],maxZoom:15,duration:.65});
+  }, [center, map, markerKey, placeFocus]);
   return null;
 }
 
@@ -129,7 +135,7 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
   return <div className="real-map-wrap" aria-label={`${beach.displayName??beach.en} ${labels.actualMap}`}>
     <MapContainer center={[35.153,129.095]} zoom={11.4} minZoom={10.5} maxBounds={[[34.98,128.84],[35.38,129.38]]} maxBoundsViscosity={1} scrollWheelZoom={true} className="real-map" zoomControl={false}>
       <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      <FlyToBeach center={beach.coordinate} placeFocus={placeFocus} zoom={beach.id === "dadaepo" ? 14 : beach.id === "imrang" ? 15.5 : 12.2} />
+      <FlyToBeach center={beach.coordinate} placeFocus={placeFocus} markerPositions={points.map(point=>point.position)} />
       <FitRecommendations center={beach.coordinate} places={recommendedPlaces} />
       <FlyToNearbyPlace />
       {beaches.map(b => <CircleMarker key={b.id} center={b.coordinate} radius={b.id===beach.id?8:5} pathOptions={{ color:"#fff", weight:2, fillColor:b.id===beach.id?"#f36e50":"#173f56", fillOpacity:1 }} eventHandlers={{ click:()=>onBeachSelect(b.id) }}>
