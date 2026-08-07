@@ -8,8 +8,9 @@ import "leaflet/dist/leaflet.css";
 type Risk = "safe" | "caution" | "danger";
 type InfoKind = "sand" | "wave" | "jelly" | "shade" | "timer" | "aid" | "plan";
 type Beach = { id:string; ko:string; en:string; coordinate:[number,number]; sand:number; wave:number; jelly:Risk; jellyArea:string; shade:{name:string;detail:string;walk:number}[] };
+type RecommendedPlace = { id:string; name:string; category:string; coordinate:[number,number]; distanceKm:number; reason:string; mapsUrl:string };
 
-type Props = { beach:Beach; beaches:Beach[]; labels:Record<string,string>; activeInfo:InfoKind; placeFocus?:[number,number]|null; userPosition?:[number,number]|null; onBeachSelect:(id:string)=>void; onInfoSelect:(kind:InfoKind)=>void };
+type Props = { beach:Beach; beaches:Beach[]; labels:Record<string,string>; activeInfo:InfoKind; placeFocus?:[number,number]|null; userPosition?:[number,number]|null; recommendedPlaces?:RecommendedPlace[]; onBeachSelect:(id:string)=>void; onInfoSelect:(kind:InfoKind)=>void };
 
 function FlyToBeach({ center, placeFocus, zoom=12.2 }:{center:[number,number];placeFocus?:[number,number]|null;zoom?:number}) {
   const map = useMap();
@@ -20,6 +21,15 @@ function FlyToBeach({ center, placeFocus, zoom=12.2 }:{center:[number,number];pl
 function FlyToUser({ position }:{position?:[number,number]|null}) {
   const map=useMap();
   useEffect(()=>{if(position)map.flyTo(position,16,{duration:.7})},[map,position]);
+  return null;
+}
+
+function FitRecommendations({ userPosition, places }:{userPosition?:[number,number]|null;places:RecommendedPlace[]}) {
+  const map=useMap();
+  useEffect(()=>{
+    if(!userPosition||places.length===0)return;
+    map.fitBounds(L.latLngBounds([userPosition,...places.map(place=>place.coordinate)]),{padding:[55,55],maxZoom:14,duration:.7});
+  },[map,places,userPosition]);
   return null;
 }
 
@@ -67,7 +77,11 @@ function userLocationIcon() {
   return L.divIcon({className:"user-location-wrap",html:'<span class="user-location-pulse"><b>●</b></span>',iconSize:[34,34],iconAnchor:[17,17]});
 }
 
-export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocus, userPosition, onBeachSelect, onInfoSelect }:Props) {
+function recommendationIcon(index:number) {
+  return L.divIcon({className:"recommendation-location-wrap",html:`<span class="recommendation-location-pin"><i>🏙️</i><b>${index+1}</b></span>`,iconSize:[48,48],iconAnchor:[24,44],popupAnchor:[0,-40]});
+}
+
+export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocus, userPosition, recommendedPlaces=[], onBeachSelect, onInfoSelect }:Props) {
   const [lat, lng] = beach.coordinate;
   const beachLayout:Record<string,{sand:[number,number];sea:[number,number];shade:[number,number]}>={
     // Dadaepo faces south-west; Imrang faces east. These use their own shoreline positions.
@@ -108,6 +122,7 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
       <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <FlyToBeach center={beach.coordinate} placeFocus={placeFocus} zoom={beach.id === "dadaepo" ? 14 : beach.id === "imrang" ? 15.5 : 12.2} />
       <FlyToUser position={userPosition} />
+      <FitRecommendations userPosition={userPosition} places={recommendedPlaces} />
       <FlyToNearbyPlace />
       {beaches.map(b => <CircleMarker key={b.id} center={b.coordinate} radius={b.id===beach.id?8:5} pathOptions={{ color:"#fff", weight:2, fillColor:b.id===beach.id?"#f36e50":"#173f56", fillOpacity:1 }} eventHandlers={{ click:()=>onBeachSelect(b.id) }}>
         <Popup><b>{b.en}</b><br/>{labels.tap}</Popup>
@@ -118,6 +133,7 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
         <Popup><b>{point.label}</b><br/>{labels.tap}</Popup>
       </Marker>)}
       {userPosition&&<Marker position={userPosition} icon={userLocationIcon()} zIndexOffset={1500}><Popup><b>📍 {labels.myLocation}</b></Popup></Marker>}
+      {recommendedPlaces.map((place,index)=><Marker key={place.id} position={place.coordinate} icon={recommendationIcon(index)} zIndexOffset={1200-index}><Popup><div className="recommendation-map-popup"><b>{index+1}. {place.name}</b><small>{place.category} · {place.distanceKm} km</small><p>{place.reason}</p><a href={place.mapsUrl} target="_blank" rel="noreferrer">Google Maps ↗</a></div></Popup></Marker>)}
     </MapContainer>
     <div className="map-legend"><span><i className="legend-beach"/> BEACH</span><span>🌡️ {labels.sand}</span><span>🌊 {labels.wave}</span><span>{"\u{1FABC}"} {labels.jelly}</span><span>🌳 {labels.shade}</span></div>
   </div>;

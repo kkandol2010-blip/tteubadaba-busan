@@ -70,7 +70,7 @@ export default async function handler(req:any,res:any) {
     const lang:Lang=["ko","en","zh","ja","fr"].includes(body.lang)?body.lang:"ko";
     if(!Number.isFinite(latitude)||!Number.isFinite(longitude)) return res.status(400).json({error:"위치 정보가 필요합니다."});
 
-    const nearest=candidates.map(place=>({...place,distanceKm:distanceKm([latitude,longitude],place.coordinate)})).sort((a,b)=>a.distanceKm-b.distanceKm).slice(0,5);
+    const nearest=candidates.map(place=>({...place,distanceKm:distanceKm([latitude,longitude],place.coordinate)})).sort((a,b)=>a.distanceKm-b.distanceKm).slice(0,3);
     const key=process.env.GEMINI_API_KEY;
     let chosen=nearest.slice(0,3).map(place=>({id:place.id,reason:fallbackReason[lang]}));
     let aiUsed=false;
@@ -93,7 +93,7 @@ export default async function handler(req:any,res:any) {
 
     const recommendations=chosen.map(item=>{
       const place=nearest.find(candidate=>candidate.id===item.id)!;
-      return {id:place.id,name:place.names[lang],category:place.category[lang],distanceKm:Number(place.distanceKm.toFixed(1)),reason:item.reason,mapsUrl:`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.names.ko)}`};
+      return {id:place.id,name:place.names[lang],category:place.category[lang],coordinate:place.coordinate,distanceKm:Number(place.distanceKm.toFixed(1)),reason:item.reason,mapsUrl:`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.names.ko)}`};
     });
     return res.status(200).json({recommendations,aiUsed});
   } catch {
