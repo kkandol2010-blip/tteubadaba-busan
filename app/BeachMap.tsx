@@ -121,6 +121,13 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
     wave: [35.31900, 129.27050] as [number,number],
     jelly: [35.31650, 129.27100] as [number,number],
     shade: [35.32300, 129.26450] as [number,number],
+  } : beach.id === "songdo" ? {
+    // Keep the thermometer on Songdo's yellow sand strip, rather than the park/building side.
+    sand: [35.07658, 129.01785] as [number,number],
+    timer: sunPosition,
+    wave: layout.sea,
+    jelly: [layout.sea[0] - .00025,layout.sea[1] + .00030] as [number,number],
+    shade: layout.shade,
   } : null;
   const points:{kind:Extract<InfoKind,"sand"|"wave"|"jelly"|"shade"|"timer">; emoji:string; position:[number,number]; label:string}[] = [
     // Temperature and sun timer: dry sand area. Wave and jellyfish: separate offshore water points.
