@@ -102,7 +102,7 @@ const AI_COPY:Record<Lang,Record<string,string>>={
 };
 function PlanCard({beach,lang,onLocated}:{beach:Beach;lang:Lang;t:Record<string,string>;onLocated:(position:[number,number])=>void}){
   const c=AI_COPY[lang],[status,setStatus]=useState<"idle"|"locating"|"loading">("idle"),[results,setResults]=useState<AiPlace[]>([]),[aiUsed,setAiUsed]=useState(false),[error,setError]=useState("");
-  useEffect(()=>{setResults([]);setError("");setStatus("idle")},[beach.id]);
+  const autoRequestedFor=useRef("");
   const recommend=()=>{
     setError("");setStatus("locating");
     if(!navigator.geolocation){setError(c.permission);setStatus("idle");return}
@@ -118,6 +118,12 @@ function PlanCard({beach,lang,onLocated}:{beach:Beach;lang:Lang;t:Record<string,
       }catch{setError(c.failed)}finally{setStatus("idle")}
     },()=>{setError(c.permission);setStatus("idle")},{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
   };
+  useEffect(()=>{
+    if(autoRequestedFor.current===beach.id)return;
+    autoRequestedFor.current=beach.id;
+    setResults([]);setError("");
+    recommend();
+  },[beach.id]);
   const busy=status!=="idle";
   return <><div className="ai-plan-card"><div><p>{c.eyebrow}</p><h2>{c.heading}</h2><small>{c.description}</small></div><span className="ai-no-beach">🏙️ {c.safe}</span><button className="primary ai-recommend-button" onClick={recommend} disabled={busy}>📍 {status==="locating"?c.locating:status==="loading"?c.loading:c.button}</button>{error&&<em className="ai-error">{error}</em>}</div>{results.length>0&&<AiResultsModal places={results} copy={c} aiUsed={aiUsed} onClose={()=>setResults([])}/>}</>;
 }
