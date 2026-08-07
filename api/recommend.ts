@@ -22,12 +22,16 @@ const candidates: Candidate[] = [
   { id:"gijang-market", names:{ko:"기장시장",en:"Gijang Market",zh:"机张市场",ja:"機張市場",fr:"Marché de Gijang"}, category:{ko:"전통시장",en:"Traditional market",zh:"传统市场",ja:"伝統市場",fr:"Marché traditionnel"}, coordinate:[35.2445,129.2140] },
 ];
 
+const beachCenters:Record<string,[number,number]>={
+  "해운대":[35.1587,129.1604],"광안리":[35.1531,129.1186],"송정":[35.1798,129.1997],"송도":[35.0765,129.0172],"다대포":[35.0483,128.9652],"일광":[35.2633,129.2338],"임랑":[35.3197,129.2659],
+};
+
 const fallbackReason: Record<Lang,string> = {
-  ko:"현재 위치에서 비교적 가깝고 바닷가가 아닌 부산 명소예요.",
-  en:"A relatively nearby Busan attraction away from the beach.",
-  zh:"这是距离当前位置较近且不在海边的釜山景点。",
-  ja:"現在地から比較的近く、海辺ではない釜山のスポットです。",
-  fr:"Un lieu de Busan relativement proche et éloigné de la plage.",
+  ko:"선택한 해수욕장에서 비교적 가깝고 바닷가가 아닌 부산 명소예요.",
+  en:"A relatively nearby Busan attraction from the selected beach, away from the seaside.",
+  zh:"这是距离所选海滩较近且不在海边的釜山景点。",
+  ja:"選択したビーチから比較的近く、海辺ではない釜山のスポットです。",
+  fr:"Un lieu de Busan relativement proche de la plage sélectionnée, mais éloigné du bord de mer.",
 };
 
 const allowedOrigins = new Set([
@@ -70,13 +74,14 @@ export default async function handler(req:any,res:any) {
     const lang:Lang=["ko","en","zh","ja","fr"].includes(body.lang)?body.lang:"ko";
     if(!Number.isFinite(latitude)||!Number.isFinite(longitude)) return res.status(400).json({error:"위치 정보가 필요합니다."});
 
-    const nearest=candidates.map(place=>({...place,distanceKm:distanceKm([latitude,longitude],place.coordinate)})).sort((a,b)=>a.distanceKm-b.distanceKm).slice(0,3);
+    const beachName=String(body.beach||"").slice(0,40),recommendationOrigin=beachCenters[beachName]??[latitude,longitude] as [number,number];
+    const nearest=candidates.map(place=>({...place,distanceKm:distanceKm(recommendationOrigin,place.coordinate)})).sort((a,b)=>a.distanceKm-b.distanceKm).slice(0,3);
     const key=process.env.GEMINI_API_KEY;
     let chosen=nearest.slice(0,3).map(place=>({id:place.id,reason:fallbackReason[lang]}));
     let aiUsed=false;
 
     if(key){
-      const prompt=`You are a concise Busan travel assistant. Select exactly 3 places from the supplied candidates. The user explicitly does not want a beach, seaside promenade, coastal viewpoint, or water activity. Prefer short travel distance and variety. Write each reason in language code ${lang}, in one short sentence. Return JSON only as {"recommendations":[{"id":"candidate-id","reason":"..."}]}. Candidates: ${JSON.stringify(nearest.map(p=>({id:p.id,name:p.names[lang],category:p.category[lang],distanceKm:Number(p.distanceKm.toFixed(1))})))}. Current selected beach context: ${String(body.beach||"").slice(0,40)}.`;
+      const prompt=`You are a concise Busan travel assistant. Recommend exactly these 3 places near the user's selected beach (${beachName}). The user explicitly does not want a beach, seaside promenade, coastal viewpoint, or water activity. Distances are measured from the selected beach, not from the user's GPS location. Write each reason in language code ${lang}, in one short sentence. Return JSON only as {"recommendations":[{"id":"candidate-id","reason":"..."}]}. Candidates: ${JSON.stringify(nearest.map(p=>({id:p.id,name:p.names[lang],category:p.category[lang],distanceKm:Number(p.distanceKm.toFixed(1))})))}.`;
       const gemini=await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",{
         method:"POST",
         headers:{"Content-Type":"application/json","x-goog-api-key":key},

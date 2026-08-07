@@ -24,12 +24,12 @@ function FlyToUser({ position }:{position?:[number,number]|null}) {
   return null;
 }
 
-function FitRecommendations({ userPosition, places }:{userPosition?:[number,number]|null;places:RecommendedPlace[]}) {
+function FitRecommendations({ center, places }:{center:[number,number];places:RecommendedPlace[]}) {
   const map=useMap();
   useEffect(()=>{
-    if(!userPosition||places.length===0)return;
-    map.fitBounds(L.latLngBounds([userPosition,...places.map(place=>place.coordinate)]),{padding:[55,55],maxZoom:14,duration:.7});
-  },[map,places,userPosition]);
+    if(places.length===0)return;
+    map.fitBounds(L.latLngBounds([center,...places.map(place=>place.coordinate)]),{padding:[55,55],maxZoom:14,duration:.7});
+  },[center,map,places]);
   return null;
 }
 
@@ -134,7 +134,7 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
       <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <FlyToBeach center={beach.coordinate} placeFocus={placeFocus} zoom={beach.id === "dadaepo" ? 14 : beach.id === "imrang" ? 15.5 : 12.2} />
       <FlyToUser position={userPosition} />
-      <FitRecommendations userPosition={userPosition} places={recommendedPlaces} />
+      <FitRecommendations center={beach.coordinate} places={recommendedPlaces} />
       <FlyToNearbyPlace />
       {beaches.map(b => <CircleMarker key={b.id} center={b.coordinate} radius={b.id===beach.id?8:5} pathOptions={{ color:"#fff", weight:2, fillColor:b.id===beach.id?"#f36e50":"#173f56", fillOpacity:1 }} eventHandlers={{ click:()=>onBeachSelect(b.id) }}>
         <Popup><b>{b.en}</b><br/>{labels.tap}</Popup>
