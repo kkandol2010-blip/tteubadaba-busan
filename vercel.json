@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npx vite build --config gh-pages-vite.config.ts --base=/",
+  "outputDirectory": "gh-pages-dist",
+  "functions": {
+    "api/recommend.ts": {
+      "maxDuration": 15
+    }
+  }
+}
