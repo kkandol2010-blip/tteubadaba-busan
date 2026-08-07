@@ -128,6 +128,20 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
     wave: layout.sea,
     jelly: [layout.sea[0] - .00025,layout.sea[1] + .00030] as [number,number],
     shade: layout.shade,
+  } : beach.id === "songjeong" ? {
+    // Songjeong: keep the thermometer on the yellow beach, not the road side.
+    sand: [35.17940, 129.19995] as [number,number],
+    timer: sunPosition,
+    wave: layout.sea,
+    jelly: [layout.sea[0] - .00025,layout.sea[1] + .00030] as [number,number],
+    shade: layout.shade,
+  } : beach.id === "ilgwang" ? {
+    // Place the thermometer by the "Ilgwang Beach" label on the map.
+    sand: [35.26275, 129.23245] as [number,number],
+    timer: sunPosition,
+    wave: layout.sea,
+    jelly: [layout.sea[0] - .00025,layout.sea[1] + .00030] as [number,number],
+    shade: layout.shade,
   } : null;
   const points:{kind:Extract<InfoKind,"sand"|"wave"|"jelly"|"shade"|"timer">; emoji:string; position:[number,number]; label:string}[] = [
     // Temperature and sun timer: dry sand area. Wave and jellyfish: separate offshore water points.
