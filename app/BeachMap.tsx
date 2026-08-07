@@ -123,7 +123,7 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
     shade: [35.32300, 129.26450] as [number,number],
   } : beach.id === "songdo" ? {
     // Keep the thermometer on Songdo's yellow sand strip, rather than the park/building side.
-    sand: [35.07658, 129.01785] as [number,number],
+    sand: [35.07635, 129.01865] as [number,number],
     timer: sunPosition,
     wave: layout.sea,
     jelly: [layout.sea[0] - .00025,layout.sea[1] + .00030] as [number,number],
