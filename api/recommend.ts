@@ -59,6 +59,23 @@ candidates.push(
   {id:"busan-design-center",names:{ko:"부산디자인진흥원",en:"Design Council Busan",zh:"釜山设计振兴院",ja:"釜山デザイン振興院",fr:"Centre du design de Busan"},category:categoryLabels.arts_centre,coordinate:[35.1743,129.1269]}
 );
 
+type HoursRule={open:number;close:number;closedDays?:number[]};
+const standardHours:HoursRule={open:9*60,close:18*60,closedDays:[1]};
+const hoursById:Record<string,HoursRule>={
+  "citizens-park":{open:5*60,close:24*60},"gamcheon":{open:9*60,close:18*60},"busan-tower":{open:10*60,close:22*60},"gukje-market":{open:9*60,close:20*60},"beomeosa":{open:5*60,close:20*60},"gijang-market":{open:9*60,close:20*60},"lotte-world-busan":{open:10*60,close:20*60},"skyline-luge-busan":{open:10*60,close:19*60},"jangansa":{open:5*60,close:20*60},"gori-sports-center":{open:6*60,close:22*60},
+};
+
+function seoulClock(date=new Date()){
+  const parts=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Seoul",weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(date);
+  const value=(type:string)=>parts.find(part=>part.type===type)?.value||"0",days:Record<string,number>={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6};
+  return {day:days[value("weekday")],minute:Number(value("hour"))*60+Number(value("minute")),iso:new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Seoul",dateStyle:"short",timeStyle:"short",hourCycle:"h23"}).format(date)};
+}
+
+function isOpenAt(place:Candidate,clock:ReturnType<typeof seoulClock>){
+  const rule=hoursById[place.id]??standardHours;
+  return !(rule.closedDays||[]).includes(clock.day)&&clock.minute>=rule.open&&clock.minute<rule.close;
+}
+
 const allowedOrigins = new Set([
   "https://kkandol2010-blip.github.io",
   "https://tteubadaba-busan.vercel.app",
@@ -100,18 +117,18 @@ export default async function handler(req:any,res:any) {
     if(!Number.isFinite(latitude)||!Number.isFinite(longitude)) return res.status(400).json({error:"위치 정보가 필요합니다."});
 
     const beachName=String(body.beach||"").slice(0,40),recommendationOrigin=beachCenters[beachName]??[latitude,longitude] as [number,number];
-    const radiusMeters=["일광","임랑"].includes(beachName)?10000:["다대포","송도","송정"].includes(beachName)?8000:7000,seenNames=new Set<string>();
-    const pool=candidates.map(place=>({...place,distanceKm:distanceKm(recommendationOrigin,place.coordinate)})).filter(place=>place.distanceKm<=radiusMeters/1000).filter(place=>{const name=place.names.ko.replace(/\s/g,"").toLowerCase();if(seenNames.has(name))return false;seenNames.add(name);return true}).sort((a,b)=>a.distanceKm-b.distanceKm);
+    const radiusMeters=["일광","임랑"].includes(beachName)?10000:["다대포","송도","송정"].includes(beachName)?8000:7000,seenNames=new Set<string>(),clock=seoulClock();
+    const pool=candidates.filter(place=>isOpenAt(place,clock)).map(place=>({...place,distanceKm:distanceKm(recommendationOrigin,place.coordinate)})).filter(place=>place.distanceKm<=radiusMeters/1000).filter(place=>{const name=place.names.ko.replace(/\s/g,"").toLowerCase();if(seenNames.has(name))return false;seenNames.add(name);return true}).sort((a,b)=>a.distanceKm-b.distanceKm);
     const excluded=new Set(Array.isArray(body.excludeIds)?body.excludeIds.filter((id:any)=>typeof id==="string").slice(0,12):[]);
     const fresh=pool.filter(place=>!excluded.has(place.id)),repeated=pool.filter(place=>excluded.has(place.id));
     const nearest=[...fresh,...repeated].slice(0,3);
-    if(nearest.length===0)return res.status(404).json({error:"선택한 해수욕장 가까이에서 추천 장소를 찾지 못했습니다."});
+    if(nearest.length===0)return res.status(404).json({error:"현재 시간에 영업 중인 가까운 장소를 찾지 못했습니다.",code:"NO_OPEN_PLACES",checkedAt:clock.iso});
     const key=process.env.GEMINI_API_KEY;
     let chosen=nearest.map(place=>({id:place.id,reason:fallbackReason[lang]}));
     let aiUsed=false;
 
     if(key){
-      const prompt=`You are a concise Busan travel assistant. Recommend exactly these ${nearest.length} places near the user's selected beach (${beachName}). The user explicitly does not want a beach, seaside promenade, coastal viewpoint, harbor, lighthouse, or water activity. Distances are measured from the selected beach and all candidates are within ${radiusMeters/1000} km. Write each reason in language code ${lang}, in one short sentence. Return JSON only as {"recommendations":[{"id":"candidate-id","reason":"..."}]}. Candidates: ${JSON.stringify(nearest.map(p=>({id:p.id,name:p.names[lang],category:p.category[lang],distanceKm:Number(p.distanceKm.toFixed(1))})))}.`;
+      const prompt=`You are a concise Busan travel assistant. Recommend exactly these ${nearest.length} places near the user's selected beach (${beachName}). These candidates passed a regular-hours check at ${clock.iso} in Busan. The user explicitly does not want a beach, seaside promenade, coastal viewpoint, harbor, lighthouse, or water activity. Distances are measured from the selected beach and all candidates are within ${radiusMeters/1000} km. Write each reason in language code ${lang}, in one short sentence. Return JSON only as {"recommendations":[{"id":"candidate-id","reason":"..."}]}. Candidates: ${JSON.stringify(nearest.map(p=>({id:p.id,name:p.names[lang],category:p.category[lang],distanceKm:Number(p.distanceKm.toFixed(1))})))}.`;
       const gemini=await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",{
         method:"POST",
         headers:{"Content-Type":"application/json","x-goog-api-key":key},
@@ -128,9 +145,9 @@ export default async function handler(req:any,res:any) {
 
     const recommendations=chosen.map(item=>{
       const place=nearest.find(candidate=>candidate.id===item.id)!;
-      return {id:place.id,name:place.names[lang],photoTitle:place.names.ko,category:place.category[lang],coordinate:place.coordinate,distanceKm:Number(place.distanceKm.toFixed(1)),reason:item.reason,mapsUrl:`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.names.ko)}`};
+      return {id:place.id,name:place.names[lang],photoTitle:place.names.ko,category:place.category[lang],coordinate:place.coordinate,distanceKm:Number(place.distanceKm.toFixed(1)),reason:item.reason,openNow:true,mapsUrl:`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.names.ko)}`};
     });
-    return res.status(200).json({recommendations,aiUsed});
+    return res.status(200).json({recommendations,aiUsed,checkedAt:clock.iso,hoursBasis:"regular"});
   } catch {
     return res.status(500).json({error:"추천을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요."});
   }

@@ -8,7 +8,7 @@ import "leaflet/dist/leaflet.css";
 type Risk = "safe" | "caution" | "danger";
 type InfoKind = "sand" | "wave" | "jelly" | "shade" | "timer" | "aid" | "plan";
 type Beach = { id:string; ko:string; en:string; displayName?:string; localizedJellyArea?:string; coordinate:[number,number]; sand:number; wave:number; jelly:Risk; jellyArea:string; shade:{name:string;detail:string;walk:number}[] };
-type RecommendedPlace = { id:string; name:string; photoTitle?:string; category:string; coordinate:[number,number]; distanceKm:number; reason:string; mapsUrl:string };
+type RecommendedPlace = { id:string; name:string; photoTitle?:string; category:string; coordinate:[number,number]; distanceKm:number; reason:string; openNow?:boolean; mapsUrl:string };
 
 type Props = { beach:Beach; beaches:Beach[]; labels:Record<string,string>; activeInfo:InfoKind; placeFocus?:[number,number]|null; userPosition?:[number,number]|null; recommendedPlaces?:RecommendedPlace[]; onBeachSelect:(id:string)=>void; onInfoSelect:(kind:InfoKind)=>void };
 
@@ -84,7 +84,7 @@ function RecommendationPopup({place,index,labels}:{place:RecommendedPlace;index:
     fetch(`${base}/api/place-photo?id=${encodeURIComponent(place.id)}&title=${encodeURIComponent(place.photoTitle||place.name)}`,{signal:controller.signal}).then(response=>{if(!response.ok)throw new Error("photo");return response.json()}).then(setPhoto).catch(error=>{if(error.name!=="AbortError")setFailed(true)});
     return()=>controller.abort();
   },[place.id,place.name,place.photoTitle]);
-  return <div className="recommendation-map-popup">{photo?<><img src={photo.photoUri} alt={`${place.name} ${labels.placePhoto}`} />{photo.attribution&&(photo.attribution.uri?<a className="photo-attribution" href={photo.attribution.uri} target="_blank" rel="noreferrer">{labels.photoBy} {photo.attribution.name}</a>:<small className="photo-attribution">{labels.photoBy} {photo.attribution.name}</small>)}</>:<div className="recommendation-photo-state">{failed?labels.photoUnavailable:labels.photoLoading}</div>}<b>{index+1}. {place.name}</b><small>{place.category} · {place.distanceKm} km</small><p>{place.reason}</p><a href={place.mapsUrl} target="_blank" rel="noreferrer">Google Maps ↗</a></div>;
+  return <div className="recommendation-map-popup">{photo?<><img src={photo.photoUri} alt={`${place.name} ${labels.placePhoto}`} />{photo.attribution&&(photo.attribution.uri?<a className="photo-attribution" href={photo.attribution.uri} target="_blank" rel="noreferrer">{labels.photoBy} {photo.attribution.name}</a>:<small className="photo-attribution">{labels.photoBy} {photo.attribution.name}</small>)}</>:<div className="recommendation-photo-state">{failed?labels.photoUnavailable:labels.photoLoading}</div>}<b>{index+1}. {place.name}</b><small>{place.category} · {place.distanceKm} km</small>{place.openNow&&<em className="open-now-badge">● {labels.regularOpen}</em>}<p>{place.reason}</p><a href={place.mapsUrl} target="_blank" rel="noreferrer">Google Maps ↗</a></div>;
 }
 
 export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocus, userPosition, recommendedPlaces=[], onBeachSelect, onInfoSelect }:Props) {
