@@ -9,6 +9,9 @@
     },
     "api/place-photo.ts": {
       "maxDuration": 15
+    },
+    "api/marine.ts": {
+      "maxDuration": 30
     }
   }
 }

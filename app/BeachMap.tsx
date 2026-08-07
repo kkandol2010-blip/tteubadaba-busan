@@ -6,8 +6,9 @@ import { Circle, CircleMarker, MapContainer, Marker, Popup, TileLayer, useMap } 
 import "leaflet/dist/leaflet.css";
 
 type Risk = "safe" | "caution" | "danger";
+type JellyRisk = Risk | "unknown";
 type InfoKind = "sand" | "wave" | "jelly" | "shade" | "timer" | "aid" | "plan";
-type Beach = { id:string; ko:string; en:string; displayName?:string; localizedJellyArea?:string; coordinate:[number,number]; sand:number; wave:number; jelly:Risk; jellyArea:string; shade:{name:string;detail:string;walk:number}[] };
+type Beach = { id:string; ko:string; en:string; displayName?:string; localizedJellyArea?:string; coordinate:[number,number]; sand:number|null; wave:number|null; jelly:JellyRisk; jellyPresent:boolean; jellyArea:string; shade:{name:string;detail:string;walk:number}[] };
 type RecommendedPlace = { id:string; name:string; photoTitle?:string; category:string; coordinate:[number,number]; distanceKm:number; reason:string; openNow?:boolean; mapsUrl:string };
 
 type Props = { beach:Beach; beaches:Beach[]; labels:Record<string,string>; activeInfo:InfoKind; placeFocus?:[number,number]|null; userPosition?:[number,number]|null; recommendedPlaces?:RecommendedPlace[]; onBeachSelect:(id:string)=>void; onInfoSelect:(kind:InfoKind)=>void };
@@ -117,13 +118,14 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
   } : null;
   const points:{kind:Extract<InfoKind,"sand"|"wave"|"jelly"|"shade"|"timer">; emoji:string; position:[number,number]; label:string}[] = [
     // Temperature and sun timer: dry sand area. Wave and jellyfish: separate offshore water points.
-    { kind:"sand", emoji:"🌡️", position:specialPositions?.sand ?? layout.sand, label:`${labels.sand} ${beach.sand}°C` },
-    { kind:"wave", emoji:"🌊", position:specialPositions?.wave ?? layout.sea, label:`${labels.wave} ${beach.wave}m` },
-    { kind:"jelly", emoji:"\u{1FABC}", position:specialPositions?.jelly ?? [layout.sea[0] - .00025,layout.sea[1] + .00030], label:`${labels.jelly} ${beach.localizedJellyArea??beach.jellyArea}` },
+    { kind:"sand", emoji:"🌡️", position:specialPositions?.sand ?? layout.sand, label:`${labels.sand} ${beach.sand===null?"—":`${beach.sand}°C`}` },
+    { kind:"wave", emoji:"🌊", position:specialPositions?.wave ?? layout.sea, label:`${labels.wave} ${beach.wave===null?"—":`${beach.wave}m`}` },
+    ...(beach.jellyPresent?[{ kind:"jelly" as const, emoji:"\u{1FABC}", position:specialPositions?.jelly ?? [layout.sea[0] - .00025,layout.sea[1] + .00030] as [number,number], label:`${labels.jelly} ${beach.localizedJellyArea??beach.jellyArea}` }]:[]),
     { kind:"shade", emoji:"🌳", position:specialPositions?.shade ?? layout.shade, label:`${labels.shade} 1` },
     { kind:"timer", emoji:"☀️", position:specialPositions?.timer ?? sunPosition, label:labels.timer },
   ];
   const color = beach.jelly === "danger" ? "#d6534b" : beach.jelly === "caution" ? "#d99c23" : "#1b8b6d";
+  const jellyPoint=points.find(point=>point.kind==="jelly");
   return <div className="real-map-wrap" aria-label={`${beach.displayName??beach.en} ${labels.actualMap}`}>
     <MapContainer center={[35.153,129.095]} zoom={11.4} minZoom={10.5} maxBounds={[[34.98,128.84],[35.38,129.38]]} maxBoundsViscosity={1} scrollWheelZoom={true} className="real-map" zoomControl={false}>
       <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -134,13 +136,13 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
         <Popup><b>{b.displayName??b.en}</b><br/>{labels.tap}</Popup>
       </CircleMarker>)}
       <Circle center={beach.coordinate} radius={440} pathOptions={{ color:"#3f829e", fillColor:"#69b5c4", fillOpacity:.13, weight:1 }} />
-      <Circle center={points[2].position} radius={150} pathOptions={{ color, fillColor:color, fillOpacity:.14, weight:2, dashArray:"5 5" }} />
+      {jellyPoint&&<Circle center={jellyPoint.position} radius={150} pathOptions={{ color, fillColor:color, fillOpacity:.14, weight:2, dashArray:"5 5" }} />}
       {points.map(point => <Marker key={point.kind} position={point.position} icon={emojiIcon(point.emoji, activeInfo===point.kind)} eventHandlers={{ click:()=>onInfoSelect(point.kind) }}>
         <Popup><b>{point.label}</b><br/>{labels.tap}</Popup>
       </Marker>)}
       {userPosition&&<Marker position={userPosition} icon={userLocationIcon()} zIndexOffset={1500}><Popup><b>📍 {labels.myLocation}</b></Popup></Marker>}
       {recommendedPlaces.map((place,index)=><Marker key={place.id} position={place.coordinate} icon={recommendationIcon(index)} zIndexOffset={1200-index} eventHandlers={{click:()=>setSelectedRecommendation(place.id)}}><Popup>{selectedRecommendation===place.id?<RecommendationPopup place={place} index={index} labels={labels}/>:<b>{place.name}</b>}</Popup></Marker>)}
     </MapContainer>
-    <div className="map-legend"><span><i className="legend-beach"/> {labels.beachMarker}</span><span>🌡️ {labels.sand}</span><span>🌊 {labels.wave}</span><span><img className="jellyfish-legend-image" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.2/assets/svg/1fabc.svg" alt=""/> {labels.jelly}</span><span>🌳 {labels.shade}</span></div>
+    <div className="map-legend"><span><i className="legend-beach"/> {labels.beachMarker}</span><span>🌡️ {labels.sand}</span><span>🌊 {labels.wave}</span>{beach.jellyPresent&&<span><img className="jellyfish-legend-image" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.2/assets/svg/1fabc.svg" alt=""/> {labels.jelly}</span>}<span>🌳 {labels.shade}</span></div>
   </div>;
 }
