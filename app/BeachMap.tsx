@@ -123,21 +123,21 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
     shade: [35.32300, 129.26450] as [number,number],
   } : beach.id === "songdo" ? {
     // Keep the thermometer on Songdo's yellow sand strip, rather than the park/building side.
-    sand: [35.07635, 129.01865] as [number,number],
+    sand: [35.07617, 129.01875] as [number,number],
     timer: sunPosition,
     wave: layout.sea,
     jelly: [layout.sea[0] - .00025,layout.sea[1] + .00030] as [number,number],
     shade: layout.shade,
   } : beach.id === "songjeong" ? {
     // Songjeong: keep the thermometer on the yellow beach, not the road side.
-    sand: [35.17940, 129.19995] as [number,number],
+    sand: [35.17915, 129.20005] as [number,number],
     timer: sunPosition,
     wave: layout.sea,
     jelly: [layout.sea[0] - .00025,layout.sea[1] + .00030] as [number,number],
     shade: layout.shade,
   } : beach.id === "ilgwang" ? {
     // Place the thermometer by the "Ilgwang Beach" label on the map.
-    sand: [35.26275, 129.23245] as [number,number],
+    sand: [35.26315, 129.23235] as [number,number],
     timer: sunPosition,
     wave: layout.sea,
     jelly: [layout.sea[0] - .00025,layout.sea[1] + .00030] as [number,number],
