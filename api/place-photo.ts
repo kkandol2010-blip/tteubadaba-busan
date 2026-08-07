@@ -11,6 +11,22 @@ const placePages:Record<string,{title:string;commonsSearch?:string}>={
   "modern-art":{title:"부산현대미술관",commonsSearch:"부산현대미술관"},
   "bokcheon":{title:"복천박물관"},
   "gijang-market":{title:"기장시장"},
+  "dadae-library":{title:"다대도서관",commonsSearch:"Dadae Library Busan"},
+  "hongti-art-village":{title:"홍티예술촌",commonsSearch:"Hongti Art Village Busan"},
+  "eulsukdo-culture-center":{title:"을숙도문화회관",commonsSearch:"Eulsukdo Cultural Center"},
+  "nakdong-eco-center":{title:"낙동강하구에코센터",commonsSearch:"Nakdong Estuary Eco Center"},
+  "gijang-library":{title:"기장도서관",commonsSearch:"Gijang Library Busan"},
+  "lotte-world-busan":{title:"롯데월드 어드벤처 부산",commonsSearch:"Lotte World Adventure Busan"},
+  "skyline-luge-busan":{title:"스카이라인 루지 부산",commonsSearch:"Skyline Luge Busan"},
+  "gamgol-theater":{title:"가마골소극장",commonsSearch:"Gamagol Theater Busan"},
+  "park-taejoon-memorial":{title:"박태준기념관",commonsSearch:"Park Tae-joon Memorial Hall"},
+  "gori-sports-center":{title:"고리스포츠문화센터",commonsSearch:"Gori Sports Culture Center"},
+  "daeryong-history-museum":{title:"대룡역사박물관",commonsSearch:"Daeryong History Museum"},
+  "jeonggwan-museum":{title:"정관박물관",commonsSearch:"Jeonggwan Museum Busan"},
+  "jangansa":{title:"장안사",commonsSearch:"Jangansa Temple Busan"},
+  "busan-art-museum":{title:"부산시립미술관",commonsSearch:"Busan Museum of Art"},
+  "museum-one":{title:"뮤지엄 원",commonsSearch:"Museum One Busan"},
+  "busan-design-center":{title:"부산디자인진흥원",commonsSearch:"Design Council Busan"},
 };
 
 const allowedOrigins=new Set(["https://kkandol2010-blip.github.io","https://tteubadaba-busan.vercel.app","http://localhost:3000","http://localhost:5173"]);
@@ -60,7 +76,8 @@ export default async function handler(req:any,res:any){
   if(recent.length>=20)return res.status(429).json({error:"잠시 후 다시 시도해 주세요."});
   recent.push(now);requestLog.set(ip,recent);
 
-  const place=placePages[String(req.query?.id||"")];
+  const requestedId=String(req.query?.id||""),requestedTitle=String(req.query?.title||"").trim().slice(0,80);
+  const place=placePages[requestedId]||(requestedId.startsWith("osm-")&&requestedTitle?{title:requestedTitle}:null);
   if(!place)return res.status(400).json({error:"지원하지 않는 장소입니다."});
 
   try{
