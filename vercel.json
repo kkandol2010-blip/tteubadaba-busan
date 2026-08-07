@@ -6,6 +6,9 @@
   "functions": {
     "api/recommend.ts": {
       "maxDuration": 15
+    },
+    "api/place-photo.ts": {
+      "maxDuration": 15
     }
   }
 }

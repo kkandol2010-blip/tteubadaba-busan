@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import L from "leaflet";
 import { Circle, CircleMarker, MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -81,7 +81,19 @@ function recommendationIcon(index:number) {
   return L.divIcon({className:"recommendation-location-wrap",html:`<span class="recommendation-location-pin"><i>🏙️</i><b>${index+1}</b></span>`,iconSize:[48,48],iconAnchor:[24,44],popupAnchor:[0,-40]});
 }
 
+function RecommendationPopup({place,index,labels}:{place:RecommendedPlace;index:number;labels:Record<string,string>}){
+  const [photo,setPhoto]=useState<{photoUri:string;attribution:{name:string;uri:string|null}|null}|null>(null),[failed,setFailed]=useState(false);
+  useEffect(()=>{
+    const controller=new AbortController();
+    const base=window.location.hostname.endsWith("github.io")?"https://tteubadaba-busan.vercel.app":"";
+    fetch(`${base}/api/place-photo?id=${encodeURIComponent(place.id)}`,{signal:controller.signal}).then(response=>{if(!response.ok)throw new Error("photo");return response.json()}).then(setPhoto).catch(error=>{if(error.name!=="AbortError")setFailed(true)});
+    return()=>controller.abort();
+  },[place.id]);
+  return <div className="recommendation-map-popup">{photo?<><img src={photo.photoUri} alt={`${place.name} ${labels.placePhoto}`} />{photo.attribution&&(photo.attribution.uri?<a className="photo-attribution" href={photo.attribution.uri} target="_blank" rel="noreferrer">{labels.photoBy} {photo.attribution.name}</a>:<small className="photo-attribution">{labels.photoBy} {photo.attribution.name}</small>)}</>:<div className="recommendation-photo-state">{failed?labels.photoUnavailable:labels.photoLoading}</div>}<b>{index+1}. {place.name}</b><small>{place.category} · {place.distanceKm} km</small><p>{place.reason}</p><a href={place.mapsUrl} target="_blank" rel="noreferrer">Google Maps ↗</a></div>;
+}
+
 export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocus, userPosition, recommendedPlaces=[], onBeachSelect, onInfoSelect }:Props) {
+  const [selectedRecommendation,setSelectedRecommendation]=useState<string|null>(null);
   const [lat, lng] = beach.coordinate;
   const beachLayout:Record<string,{sand:[number,number];sea:[number,number];shade:[number,number]}>={
     // Dadaepo faces south-west; Imrang faces east. These use their own shoreline positions.
@@ -133,7 +145,7 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
         <Popup><b>{point.label}</b><br/>{labels.tap}</Popup>
       </Marker>)}
       {userPosition&&<Marker position={userPosition} icon={userLocationIcon()} zIndexOffset={1500}><Popup><b>📍 {labels.myLocation}</b></Popup></Marker>}
-      {recommendedPlaces.map((place,index)=><Marker key={place.id} position={place.coordinate} icon={recommendationIcon(index)} zIndexOffset={1200-index}><Popup><div className="recommendation-map-popup"><b>{index+1}. {place.name}</b><small>{place.category} · {place.distanceKm} km</small><p>{place.reason}</p><a href={place.mapsUrl} target="_blank" rel="noreferrer">Google Maps ↗</a></div></Popup></Marker>)}
+      {recommendedPlaces.map((place,index)=><Marker key={place.id} position={place.coordinate} icon={recommendationIcon(index)} zIndexOffset={1200-index} eventHandlers={{click:()=>setSelectedRecommendation(place.id)}}><Popup>{selectedRecommendation===place.id?<RecommendationPopup place={place} index={index} labels={labels}/>:<b>{place.name}</b>}</Popup></Marker>)}
     </MapContainer>
     <div className="map-legend"><span><i className="legend-beach"/> BEACH</span><span>🌡️ {labels.sand}</span><span>🌊 {labels.wave}</span><span>{"\u{1FABC}"} {labels.jelly}</span><span>🌳 {labels.shade}</span></div>
   </div>;
