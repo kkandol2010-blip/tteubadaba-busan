@@ -78,8 +78,8 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
     shade: [35.05620, 128.96560] as [number,number],
   } : beach.id === "imrang" ? {
     // Imrang Beach's mapped sand strip runs north-to-south; put both heat controls on it.
-    sand: [35.31900, 129.26440] as [number,number],
-    timer: [35.31780, 129.26330] as [number,number],
+    sand: [35.31780, 129.26330] as [number,number],
+    timer: [35.31590, 129.26280] as [number,number],
     wave: [35.31900, 129.27050] as [number,number],
     jelly: [35.31650, 129.27100] as [number,number],
     shade: [35.32300, 129.26450] as [number,number],
