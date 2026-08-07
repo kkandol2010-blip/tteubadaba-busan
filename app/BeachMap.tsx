@@ -18,12 +18,6 @@ function FlyToBeach({ center, placeFocus, zoom=12.2 }:{center:[number,number];pl
   return null;
 }
 
-function FlyToUser({ position }:{position?:[number,number]|null}) {
-  const map=useMap();
-  useEffect(()=>{if(position)map.flyTo(position,16,{duration:.7})},[map,position]);
-  return null;
-}
-
 function FitRecommendations({ center, places }:{center:[number,number];places:RecommendedPlace[]}) {
   const map=useMap();
   useEffect(()=>{
@@ -65,9 +59,10 @@ function FlyToNearbyPlace() {
 }
 
 function emojiIcon(emoji:string, active:boolean) {
+  const content=emoji==="\u{1FABC}"?'<img class="jellyfish-emoji-image" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.2/assets/svg/1fabc.svg" alt="" />':emoji;
   return L.divIcon({
     className: "map-emoji-wrap",
-    html: `<span class="map-emoji ${active ? "chosen" : ""}">${emoji}</span>`,
+    html: `<span class="map-emoji ${active ? "chosen" : ""}">${content}</span>`,
     iconSize: [48, 48],
     iconAnchor: [24, 24],
   });
@@ -133,7 +128,6 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
     <MapContainer center={[35.153,129.095]} zoom={11.4} minZoom={10.5} maxBounds={[[34.98,128.84],[35.38,129.38]]} maxBoundsViscosity={1} scrollWheelZoom={true} className="real-map" zoomControl={false}>
       <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <FlyToBeach center={beach.coordinate} placeFocus={placeFocus} zoom={beach.id === "dadaepo" ? 14 : beach.id === "imrang" ? 15.5 : 12.2} />
-      <FlyToUser position={userPosition} />
       <FitRecommendations center={beach.coordinate} places={recommendedPlaces} />
       <FlyToNearbyPlace />
       {beaches.map(b => <CircleMarker key={b.id} center={b.coordinate} radius={b.id===beach.id?8:5} pathOptions={{ color:"#fff", weight:2, fillColor:b.id===beach.id?"#f36e50":"#173f56", fillOpacity:1 }} eventHandlers={{ click:()=>onBeachSelect(b.id) }}>
@@ -147,6 +141,6 @@ export default function BeachMap({ beach, beaches, labels, activeInfo, placeFocu
       {userPosition&&<Marker position={userPosition} icon={userLocationIcon()} zIndexOffset={1500}><Popup><b>📍 {labels.myLocation}</b></Popup></Marker>}
       {recommendedPlaces.map((place,index)=><Marker key={place.id} position={place.coordinate} icon={recommendationIcon(index)} zIndexOffset={1200-index} eventHandlers={{click:()=>setSelectedRecommendation(place.id)}}><Popup>{selectedRecommendation===place.id?<RecommendationPopup place={place} index={index} labels={labels}/>:<b>{place.name}</b>}</Popup></Marker>)}
     </MapContainer>
-    <div className="map-legend"><span><i className="legend-beach"/> BEACH</span><span>🌡️ {labels.sand}</span><span>🌊 {labels.wave}</span><span>{"\u{1FABC}"} {labels.jelly}</span><span>🌳 {labels.shade}</span></div>
+    <div className="map-legend"><span><i className="legend-beach"/> BEACH</span><span>🌡️ {labels.sand}</span><span>🌊 {labels.wave}</span><span><img className="jellyfish-legend-image" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.2/assets/svg/1fabc.svg" alt=""/> {labels.jelly}</span><span>🌳 {labels.shade}</span></div>
   </div>;
 }
