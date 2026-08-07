@@ -80,15 +80,10 @@ async function latestJellyReport() {
   const file = reportHtml.match(/href="([^"]*fileDownloadStat\.do\?FILE_ID=[^"]+)"/);
   if (!file) throw new Error("NIFS PDF not found");
   const pdfUrl = new URL(file[1].replace(/&amp;/g, "&"), "https://www.nifs.go.kr").toString();
-  const pdfData = new Uint8Array(await (await fetch(pdfUrl, { signal: AbortSignal.timeout(12000) })).arrayBuffer());
-  const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  const document = await getDocument({ data: pdfData }).promise;
-  let text = "";
-  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
-    const page = await document.getPage(pageNumber);
-    const content = await page.getTextContent();
-    text += `${content.items.map(item => "str" in item ? item.str : "").join(" ")}\n`;
-  }
+  const pdfData = Buffer.from(await (await fetch(pdfUrl, { signal: AbortSignal.timeout(12000) })).arrayBuffer());
+  const { default: parsePdf } = await import("pdf-parse/lib/pdf-parse.js");
+  const parsed = await parsePdf(pdfData);
+  const text = parsed.text;
   const reportDate = link[2].match(/20\d{2}[.-]\d{2}[.-]\d{2}/)?.[0]?.replace(/\./g, "-") ?? null;
   jellyCache = { expires: Date.now() + CACHE_MS, reportTitle: link[2].trim(), reportUrl, reportDate, text: text.replace(/\s+/g, " ") };
   return jellyCache;
